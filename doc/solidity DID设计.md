@@ -1,22 +1,15 @@
-1.	考虑到需要升级，则存储和控制需要相分离；
-2.	考虑到需要升级，如果OND ID document的属性增加了，怎么在合约中增加一类存储；
-3.	Solidity的struct不允许嵌套self，那么group该怎么定义？
-4.	可以采用linked event的形式存储ONT ID的document；
-
 # UID Discovery 设计文档 —— solidity实现
 
 ## 当前ONT ID的document结构
 
 ```json
 {
-  "@context": ["https://www.w3.org/ns/did/v1", "https://ontid.ont.io/did/v2"]
+  "@context": ["https://www.w3.org/ns/did/v1", "https://ontid.ont.io/did/v2"],
   "id": "did:ont:AderzAExYf7yiuHicVLKmooY51i2Cdzg72",
   "publicKey": [{...}],
   "authentication": [{...}],
-  "controller": {...},
-  "recovery": {...},
+  "controller": [...],
   "service": [{...}],
-  "attribute": [{...}],
   "created": {...},
   "updated": {...},
   "proof": {...}
@@ -27,56 +20,33 @@
 
 ![image](./三层体系结构.png)
 
+参考：https://blog.openzeppelin.com/proxy-patterns/
+
 ### Layer 1
 
-以mapping形式存储ONT ID的各个字段，key是属性的名字，value是每本属性合约的地址。
+代理层，将合约调用代理到协议层。
 
-```solidity
-contract DIDContract {
-    mapping(string => ContentContract) public contents;
-}
-```
+使用代理的好处是合约可升级，且用户入口的合约地址不变，主要依赖delegatecall实现。
 
 ### Layer 2
 
-ONT ID document的每个属性都由一本合约来实现，或者多个属性可以由同一本合约管理（为了减少合约数量）。属性合约继承自共同的父类。
+协议层（逻辑层），这层实现了W3C的DID协议，并且逻辑可以更改。
 
-```solidity
-contract ContentContract {
-    mapping(string => DataContract) public didData; // store each DID data
-    function add() public;
-    function remove() public;
-    ...
-}
-```
+不存储自己的状态变量，只使用Layer 3的存储，以避免升级后的存储冲突。
 
 ### Layer 3
 
-数据存储层，每本属性合约有独立的数据存储合约。数据的存储格式为bytes，序列化方式为Ontology ZeroCopy。
+数据存储层，使用map存储数据。数据的存储格式为bytes，序列化方式为Ontology ZeroCopy。
 
 ```solidity
 contract DataContract {
-    function put(bytes key, bytes value) public;
-    function get(bytes key) public;
+    mapping(bytes32 => uint) uintData;
+    mapping(bytes32 => string) stringData;
+    mapping(byte32 => bytes) bytesData;
+    ...
 }
 ```
 
 ## 合约升级
 
-### document字段升级
-
-这意味着document字段发生了改变，字段可能会变多，也可能会删减。
-
-这种情况下我们升级Layer 1的合约即可。可以整个合约升级，也可以直接修改contents字段，增加/删除属性合约。
-
-### 属性规则升级
-
-直接升级Layer 2对应的合约。由于数据都是不变的，所以修改逻辑层即可。这里要考虑新旧版本的数据的兼容问题，即新协议要兼容老数据。
-
-## Group实现
-
-用Ontology ZeroCopy的bytes即可。
-
-## Linked Event
-
-使用event链表存储每次document的更新，这样可以很方便的追溯。合约中存的始终都是最新的document，当然在合约中也可以不存，这样就只有event里面有document了。
+由于数据和协议相分离，所以有升级需要时，直接修改Layer 2的合约即可。Layer 3的数据存储形式直接就是K-V结构，这是与协议无关的，所以升级时无修改动。
