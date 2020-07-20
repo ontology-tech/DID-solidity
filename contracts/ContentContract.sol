@@ -1,8 +1,9 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
+import "./DataContract.sol";
 abstract contract ContentContract {
-    mapping(string => address) didData;
+    mapping(string => DataContract) didData;
 
     function put(string memory did, bytes memory data) public virtual;
     function remove(string memory did, uint index) public virtual;
