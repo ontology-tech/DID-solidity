@@ -8,5 +8,5 @@ abstract contract ContentContract {
     function put(string memory did, bytes memory data) public virtual;
     function remove(string memory did, uint index) public virtual;
     function update(string memory did, uint index, bytes memory data) public virtual;
-    function get(string memory did, uint inde) public virtual returns(bytes memory);
+    function get(string memory did, uint index) public virtual returns(bytes memory);
 }
