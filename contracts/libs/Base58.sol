@@ -1,4 +1,4 @@
-pragma solidity ^0.4.0;
+pragma solidity ^0.6.0;
 
 library Base58 {
 
