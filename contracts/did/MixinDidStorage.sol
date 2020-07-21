@@ -7,4 +7,8 @@ contract MixinDidStorage {
     using IterableMapping for IterableMapping.itmap;
     mapping(string => IterableMapping.itmap) public data;
 
+    byte public constant ACTIVATED = "1";
+    byte public constant REVOKED = "0";
+
+    string public constant PUB_KEY_TYPE = "EcdsaSecp256k1VerificationKey2019";
 }

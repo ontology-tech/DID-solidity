@@ -3,13 +3,13 @@ pragma experimental ABIEncoderV2;
 
 library KeyUtils {
 
-    function genIdKey(string memory did) public view returns (string memory){
-        return string(abi.encodePacked(did, bytes("id")));
+    // status represent DID activated("1") or revoked("0")
+    function genStatusKey(string memory did) public view returns (string memory){
+        return string(abi.encodePacked(did, bytes("status")));
     }
 
-    // document.id is single value
-    function genIdSencondKey() public view returns (bytes32){
-        return keccak256(bytes("id"));
+    function genStatusSencondKey() public view returns (bytes32){
+        return keccak256(bytes("status"));
     }
 
     function genContextKey(string memory did) public view returns (string memory){

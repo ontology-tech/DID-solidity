@@ -66,4 +66,18 @@ interface IDid {
     function removeAuthKey(string calldata did, bytes calldata pubKey) external;
 
     function removeAuthKeyByController(string calldata did, bytes calldata pubKey, string calldata controller) external;
+
+
+    event AddContext(string indexed did, string context);
+
+    function addContext(string calldata did, string[] calldata context) external;
+
+    function addContextByController(string calldata did, string[] calldata context, string calldata controller) external;
+
+
+    event RemoveContext(string indexed did, string context);
+
+    function removeContext(string calldata did, string[] calldata context) external;
+
+    function removeContextByController(string calldata did, string[] calldata context, string calldata controller) external;
 }
