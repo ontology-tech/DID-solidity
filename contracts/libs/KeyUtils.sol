@@ -24,8 +24,8 @@ library KeyUtils {
         return string(abi.encodePacked(did, bytes("publicKey")));
     }
 
-    function genPubKeyListSecondKey(string memory pubKeyId) public view returns (bytes32){
-        return keccak256(bytes(pubKeyId));
+    function genPubKeyListSecondKey(bytes memory pubKey) public view returns (bytes32){
+        return keccak256(pubKey);
     }
 
     function genAuthListKey(string memory did) public view returns (string memory){

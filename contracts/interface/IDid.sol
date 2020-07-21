@@ -9,42 +9,42 @@ interface IDid {
 
     function regIDWithPublicKey(string calldata did, bytes calldata pubKey) external;
 
-    function regIDWithController(string calldata did, string[] calldata controller, string calldata signerDID) external;
+    // function regIDWithController(string calldata did, string[] calldata controller, string calldata signerDID) external;
 
 
     event Revoke(string indexed did);
 
     function revokeID(string calldata did) external;
 
-    function revokeIDByController(string calldata did, string calldata controllerSigner) external;
+    // function revokeIDByController(string calldata did, string calldata controllerSigner) external;
 
 
     event AddController(string indexed did, string controller);
 
     function addController(string calldata did, string calldata controller) external;
 
-    function addControllerByController(string calldata did, string calldata controller, string calldata controllerSigner) external;
+    // function addControllerByController(string calldata did, string calldata controller, string calldata controllerSigner) external;
 
 
     event RemoveController(string indexed did, string controller);
 
     function removeController(string calldata did, string calldata controller) external;
 
-    function removeControllerByController(string calldata did, string calldata controller, string calldata controllerSigner) external;
+    // function removeControllerByController(string calldata did, string calldata controller, string calldata controllerSigner) external;
 
 
     event AddKey(string indexed did, bytes pubKey, string[] controller);
 
-    function addKey(string calldata did, bytes calldata newPubKey, bytes calldata verifyPubKey, string[] calldata pubKeyController) external;
+    function addKey(string calldata did, bytes calldata newPubKey, string[] calldata pubKeyController) external;
 
-    function addKeyByController(string calldata did, string calldata controller, bytes calldata newPubKey, string[] calldata pubKeyController) external;
+    // function addKeyByController(string calldata did, string calldata controller, bytes calldata newPubKey, string[] calldata pubKeyController) external;
 
 
     event RemoveKey(string indexed did, bytes pubKey);
 
     function removeKey(string calldata did, bytes calldata pubKey) external;
 
-    function removeKeyByController(string calldata did, bytes calldata pubKey, bytes calldata controller) external;
+    // function removeKeyByController(string calldata did, bytes calldata pubKey, bytes calldata controller) external;
 
 
     event AddNewAuthKey(string indexed did, bytes pubKey, string[] controller);
@@ -72,14 +72,14 @@ interface IDid {
 
     function addContext(string calldata did, string[] calldata context) external;
 
-    function addContextByController(string calldata did, string[] calldata context, string calldata controller) external;
+    // function addContextByController(string calldata did, string[] calldata context, string calldata controller) external;
 
 
     event RemoveContext(string indexed did, string context);
 
     function removeContext(string calldata did, string[] calldata context) external;
 
-    function removeContextByController(string calldata did, string[] calldata context, string calldata controller) external;
+    // function removeContextByController(string calldata did, string[] calldata context, string calldata controller) external;
 
     function addService(string did, string serviceId, string serviceType, string serviceEndpoint)
     external
@@ -120,5 +120,4 @@ interface IDid {
     function removeControllerByController(string id, string controller, string signer)
     external
     returns (bool ok);
-
 }
