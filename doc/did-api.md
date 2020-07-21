@@ -156,8 +156,7 @@ addKey
 ----|--------|---|-------
  0  |  did | string  | DID
  1  |  newPubKey | bytes  | 添加的新公钥
- 2  |  verifyPubKey | bytes  | 验签公钥
- 3  |  pubKeyController | string[]  | 公钥的controller（可选，默认为本ID）（新增）
+ 2  |  pubKeyController | string[]  | 公钥的controller（可选，默认为本ID）（新增）
 
 调用此接口需提供所有者的签名，并通过参数2给出验签公钥。验签公钥必须已绑定到该ID。
 
