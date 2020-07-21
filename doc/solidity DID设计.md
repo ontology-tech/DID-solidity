@@ -11,8 +11,7 @@
   "controller": [...],
   "service": [{...}],
   "created": {...},
-  "updated": {...},
-  "proof": {...}
+  "updated": {...}
 }
 ```
 

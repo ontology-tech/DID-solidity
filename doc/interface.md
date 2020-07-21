@@ -36,3 +36,15 @@ function removeContent(string memory contentKey) public;
 
 [did-api](./did-api.md)
 
+## DataContract
+
+数据存储层必须要能存取结构体数组。
+
+为了防止W3C协议升级改变结构体字段从而影响已有数据，存储的值必须要是序列化好的结构体数据（bytes）；
+为了防止每次更新都要读写整个的数组，存储的形式将采用map实现；
+为了访问数据方便，我们需要使用[iterable map](https://solidity.readthedocs.io/en/v0.6.11/types.html#iterable-mappings);
+
+所以数据合约的存储结构应该是
+```solidity
+mapping(string => itmap ) public data;
+```
