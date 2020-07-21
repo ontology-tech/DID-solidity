@@ -458,7 +458,7 @@ addContext
 
 event:
 
-event AddContext(string indexed did, string[] context);
+event AddContext(string indexed did, string context);
 
 #### 添加自定义context
 
@@ -476,7 +476,7 @@ addContextByController
 
 event:
 
-event AddContext(string indexed did, string[] context);
+event AddContext(string indexed did, string context);
 
 
 #### 移除自定义context
@@ -494,7 +494,7 @@ removeContext
 
 event:
 
-event RemoveContext(string indexed did, string[] context);
+event RemoveContext(string indexed did, string context);
 
 #### 移除自定义context
 
@@ -512,7 +512,7 @@ removeContextByController
 
 event:
 
-event RemoveContext(string indexed did, string[] context);
+event RemoveContext(string indexed did, string context);
 
 ### 验证方法
 

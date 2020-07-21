@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "./../libs/DidUtils.sol";
 
-contract MixinIDid is EternalStorage {
+contract MixinIDid is EternalStorage, IDid {
     // Do not hold any state variables in this contract
     mapping(bytes => bool) public DidExist;
     mapping(bytes => uint) public DidCreatedTime;
