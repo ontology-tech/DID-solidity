@@ -136,7 +136,7 @@ removeControllerByController
 ----|-------|---|-------
  0  |  did | string  | DID
  1  |  controller | string | 要移除的代理控制人 
- 2 | signer | string | 签名控制人的DID 
+ 2 | controllerSigner | string | 签名控制人的DID 
 
 调用此接口需提供所有者的签名。
 
@@ -157,13 +157,13 @@ addKey
  0  |  did | string  | DID
  1  |  newPubKey | bytes  | 添加的新公钥
  2  |  verifyPubKey | bytes  | 验签公钥
- 3  |  controller | string[]  | 公钥的controller（可选，默认为本ID）（新增）
+ 3  |  pubKeyController | string[]  | 公钥的controller（可选，默认为本ID）（新增）
 
 调用此接口需提供所有者的签名，并通过参数2给出验签公钥。验签公钥必须已绑定到该ID。
 
 event:
 
-AddKey(string indexed did, bytes pubKey, string[] controller);
+event AddKey(string indexed did, bytes pubKey, string[] controller);
 
 #### 所有者废除公钥
 
@@ -199,7 +199,7 @@ addKeyByController
 
 event:
 
-AddKey(string indexed did, bytes pubKey, string[] controller);
+event AddKey(string indexed did, bytes pubKey, string[] controller);
 
 #### 代理人废除公钥
 
@@ -230,18 +230,10 @@ addNewAuthKey
 编号 |   名称 |  类型   | 说明
 ----|-------| ---|-------
  0  |  did |  string | DID
- 1  |  pubKeyData | bytes  | 公钥数据
+ 1  |  pubKey | bytes  | 公钥
+ 2  | controller | string[] | 公钥控制人
 
-公钥数据内容如下
-
-```
-NewPublicKey {
-	PublicKey
-	Controller   （可选，默认为自身ID）
-}
-```
-
-新公钥成功添加后，会自动分配一个公钥编号。
+新公钥成功添加后，会自动分配一个公钥ID。
 
 event:
 
@@ -256,17 +248,9 @@ addNewAuthKeyByController
 | 编号 |  名称 | 类型   | 说明       |
 | ---- | ------| --- | ---------- |
 | 0    | did | string | DID     |
-| 1    | pubKeyData | bytes | 公钥数据   |
-| 2    | controller | string | 签名控制人 |
-
-公钥数据内容如下
-
-```
-NewPublicKey {
-	PublicKey
-	Controller   （可选，默认为自身ID）
-}
-```
+| 1  |  pubKey | bytes  | 公钥 |
+| 2  | controller | string[] | 公钥控制人 |
+| 3    | controllerSigner | string | 签名控制人 |
 
 新公钥成功添加后，会自动分配一个公钥编号。
 
