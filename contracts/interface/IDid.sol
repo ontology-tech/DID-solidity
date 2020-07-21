@@ -80,4 +80,45 @@ interface IDid {
     function removeContext(string calldata did, string[] calldata context) external;
 
     function removeContextByController(string calldata did, string[] calldata context, string calldata controller) external;
+
+    function addService(string did, string serviceId, string serviceType, string serviceEndpoint)
+    external
+    returns (bool ok);
+
+    function addServiceByController(string did, string controller, string serviceId, string serviceType, string serviceEndpoint)
+    external
+    returns (bool ok);
+
+    function updateService(string did, string serviceId, string serviceType, string serviceEndpoint)
+    external
+    returns (bool ok);
+
+    function updateServiceByController(string did, string controller, string serviceId, string serviceType, string serviceEndpoint)
+    external
+    returns (bool ok);
+
+    function removeService(string did, string serviceId)
+    external
+    returns (bool ok);
+
+    function removeServiceByController(string did, string serviceId, string controller)
+    external
+    returns (bool ok);
+
+    function addController(string did, string controller)
+    external
+    returns (bool ok);
+
+    function addControllerByController(string id, string controller, string controllerSigner)
+    external
+    returns (bool ok);
+
+    function removeController(string id, string controller)
+    external
+    returns (bool ok);
+
+    function removeControllerByController(string id, string controller, string signer)
+    external
+    returns (bool ok);
+
 }

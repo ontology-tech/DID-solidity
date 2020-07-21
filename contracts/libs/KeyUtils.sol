@@ -35,4 +35,20 @@ library KeyUtils {
     function genAuthListSecondKey(string memory pubKeyId) public view returns (bytes32){
         return keccak256(bytes(pubKeyId));
     }
+
+    function genControllerKey(string memory did) internal pure returns (byte32) {
+        return keccak256(abi.encodePacked(did, "controller"));
+    }
+
+    function genServiceKey(string memory did) internal pure returns (bytes) {
+        return keccak256(abi.encodePacked(did, "service"));
+    }
+
+    function genCreateTime(string memory did) internal pure returns (byte32) {
+        return keccak256(abi.encodePacked(did, "createTime"));
+    }
+
+    function genUpdateTime(string memory did) internal pure returns (byte32) {
+        return keccak256(abi.encodePacked(did, "updateTime"));
+    }
 }

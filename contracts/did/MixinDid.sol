@@ -122,4 +122,45 @@ contract DIDContract is MixinDidStorage, IDid {
             }
         }
     }
+
+    function addController(string did, string controller)
+    external
+    returns (bool){
+        // verify did signature
+
+        // verify controller validity
+
+        return true;
+    }
+
+    function addControllerByController(string id, string controller, string controllerSigner)
+    external
+    returns (bool){
+
+        return true;
+    }
+
+    function removeController(string id, string controller)
+    external
+    returns (bool){
+        return true;
+    }
+
+    function removeControllerByController(string id, string controller, string signer)
+    external
+    returns (bool) {
+        return true;
+    }
+
+    // TODO
+    function createTime(string did) private {
+        byte32 key = genCreateTime(did);
+        data.insert(key, now);
+    }
+
+    // TODO
+    function updateTime(string did) private {
+        byte32 key = genUpdateTime(did);
+        data.insert(key, now);
+    }
 }
