@@ -4,13 +4,12 @@ pragma experimental ABIEncoderV2;
 
 import "./../libs/DidUtils.sol";
 
-contract MixinIDid {
+contract MixinIDid is EternalStorage {
     // Do not hold any state variables in this contract
     mapping(bytes => bool) public DidExist;
     mapping(bytes => uint) public DidCreatedTime;
 
     mapping(bytes => PublicKey[]) public PublicKeyByIdByKey;
-
 
 
     struct PublicKey {
@@ -27,7 +26,7 @@ contract MixinIDid {
         require(msg.sender == pkAddr, "Check witness failed");
         _;
     }
-    
+
     modifier checkWitnessController(bytes memory controller) {
         // TODO modify
         address pkAddr = DidUtils.addressFromPubKey(controller);
@@ -35,6 +34,7 @@ contract MixinIDid {
         _;
     }
     event Register(bytes id);
+
     function regIdWithPublicKey(bytes memory id, bytes memory publicKey) checkWitnessPublicKey(publicKey) public returns (bool) {
         // Make sure id and publicKey are not empty
         require(id.length > 0 && publicKey.length > 0, "Id or PublicKey cannot be empty");
@@ -45,16 +45,17 @@ contract MixinIDid {
         // Insert public key
         require(!_checkExistInArray(PublicKeyByIdByKey[id], publicKey), "Public key already exists");
         PublicKeyByIdByKey[id].push(PublicKey({
-            key: publicKey,
-            revoked: false,
-            controller: id,
-            isPkList: true,
-            isAuthentication: true
-        }));
+            key : publicKey,
+            revoked : false,
+            controller : id,
+            isPkList : true,
+            isAuthentication : true
+            }));
         DidExist[id] = true;
         emit Register(id);
         return true;
     }
+
     function _checkExistInArray(PublicKey[] memory publicKeys, bytes memory key) internal pure returns (bool) {
         for (uint i = 0; i < publicKeys.length; i++) {
             if (BytesUtils.equal(publicKeys[i].key, key)) {
@@ -63,8 +64,9 @@ contract MixinIDid {
         }
         return false;
     }
-    function regIdWithController(bytes memory id, bytes[] memory controller)  public returns (bool) {
-            
+
+    function regIdWithController(bytes memory id, bytes[] memory controller) public returns (bool) {
+
     }
-    
+
 }

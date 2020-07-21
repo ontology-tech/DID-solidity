@@ -1,4 +1,5 @@
 pragma solidity ^0.6.0;
+
 import "./BytesUtils.sol";
 
 library DidUtils {
@@ -12,9 +13,25 @@ library DidUtils {
         return true;
     }
 
+    function verifyDIDSignature(bytes memory pubkey) public view returns (bool){
+        address addr = pubKeyToAddr(pubkey);
+        return addr == msg.sender;
+    }
+
     function addressFromPubKey(bytes memory publicKey) internal pure returns (address) {
         return address(uint160(bytes20(keccak256(publicKey))));
     }
 
-    
+    function genContextKey(string memory did) public view returns (bytes32){
+        return keccak256(abi.encodePacked(did, "@context"));
+    }
+
+    function genPubKeyListKey(string memory did) public view returns (bytes32){
+        return keccak256(abi.encodePacked(did, "publicKey"));
+    }
+
+    function updateTime() internal pure returns (bool) {
+        return true;
+    }
+
 }
