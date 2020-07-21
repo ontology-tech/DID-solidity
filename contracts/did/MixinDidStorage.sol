@@ -1,6 +1,6 @@
 pragma solidity ^0.6.0;
 
-import "../libs/IterableMap.sol";
+import "../libs/IterableMapping.sol";
 
 
 contract MixinDidStorage {

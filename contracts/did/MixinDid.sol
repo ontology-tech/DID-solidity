@@ -7,5 +7,5 @@ import "./MixinDidStorage.sol";
 
 contract MixinIDid is MixinDidStorage, IDid {
     // Do not hold any state variables in this contract
-
+    function regIDWithPublicKey(string calldata did, bytes calldata pubKey)  external;
 }
