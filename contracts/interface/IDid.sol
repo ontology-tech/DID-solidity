@@ -81,43 +81,23 @@ interface IDid {
 
     // function removeContextByController(string calldata did, string[] calldata context, string calldata controller) external;
 
-    function addService(string did, string serviceId, string serviceType, string serviceEndpoint)
-    external
-    returns (bool ok);
+    function addService(string did, string serviceId, string serviceType, string serviceEndpoint) external;
 
-    function addServiceByController(string did, string controller, string serviceId, string serviceType, string serviceEndpoint)
-    external
-    returns (bool ok);
+    function addServiceByController(string did, string controller, string serviceId, string serviceType, string serviceEndpoint) external;
 
-    function updateService(string did, string serviceId, string serviceType, string serviceEndpoint)
-    external
-    returns (bool ok);
+    function updateService(string did, string serviceId, string serviceType, string serviceEndpoint) external;
 
-    function updateServiceByController(string did, string controller, string serviceId, string serviceType, string serviceEndpoint)
-    external
-    returns (bool ok);
+    function updateServiceByController(string did, string controller, string serviceId, string serviceType, string serviceEndpoint) external;
 
-    function removeService(string did, string serviceId)
-    external
-    returns (bool ok);
+    function removeService(string did, string serviceId) external;
 
-    function removeServiceByController(string did, string serviceId, string controller)
-    external
-    returns (bool ok);
+    function removeServiceByController(string did, string serviceId, string controller) external;
 
-    function addController(string did, string controller)
-    external
-    returns (bool ok);
+    function addController(string did, string controller) external;
 
-    function addControllerByController(string id, string controller, string controllerSigner)
-    external
-    returns (bool ok);
+    function addControllerByController(string did, string controller, string controllerSigner) external;
 
-    function removeController(string id, string controller)
-    external
-    returns (bool ok);
+    function removeController(string did, string controller) external;
 
-    function removeControllerByController(string id, string controller, string signer)
-    external
-    returns (bool ok);
+    function removeControllerByController(string did, string controller, string signer) external;
 }
