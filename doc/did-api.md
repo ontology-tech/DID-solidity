@@ -331,6 +331,9 @@ VerifyController
 ### 查询接口
 
 #### 查询DID Document
+
+>note: 此接口暂未实现
+
 getDocumentJson
 
 参数：
@@ -342,3 +345,77 @@ getDocumentJson
 返回：DID对应的Document数据，该数据以JSON-LD方式组织。
 
 DID Document具体内容可以查询[DID规范v2](https://)。
+
+#### 查询context
+
+getContext
+
+参数：
+
+编号 | 名称 | 类型   | 说明
+----|-----|----|-------
+0  | did | string | 查询的DID
+
+#### 查询public key列表
+
+getAllPubKey
+
+参数：
+
+编号 | 名称 | 类型   | 说明
+----|-----|----|-------
+0  | did | string | 查询的DID
+
+
+#### 查询authentication列表
+
+getAllAuthKey
+
+参数：
+
+编号 | 名称 | 类型   | 说明
+----|-----|----|-------
+0  | did | string | 查询的DID
+
+
+#### 查询controller列表
+
+getAllController
+
+参数：
+
+编号 | 名称 | 类型   | 说明
+----|-----|----|-------
+0  | did | string | 查询的DID
+
+
+#### 查询service列表
+
+getAllService
+
+参数：
+
+编号 | 名称 | 类型   | 说明
+----|-----|----|-------
+0  | did | string | 查询的DID
+
+
+#### 查询创建时间
+
+getCreatedTime
+
+参数：
+
+编号 | 名称 | 类型   | 说明
+----|-----|----|-------
+0  | did | string | 查询的DID
+
+#### 查询更新时间
+
+getUpdatedTime
+
+参数：
+
+编号 | 名称 | 类型   | 说明
+----|-----|----|-------
+0  | did | string | 查询的DID
