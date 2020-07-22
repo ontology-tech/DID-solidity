@@ -48,7 +48,12 @@ contract DIDContract is MixinDidStorage, IDid {
         _;
     }
 
-    modifier verifyDIDSignature(string memory did) {
+    modifier onlyDIDOwner(string memory did) {
+        require(verifyDIDSignature(did));
+        _;
+    }
+
+    function verifyDIDSignature(string memory did) private view returns(bool) {
         bytes memory pubKey;
         bool keyIsDeActivated;
         bool keyIsAuth;
@@ -69,8 +74,7 @@ contract DIDContract is MixinDidStorage, IDid {
                 break;
             }
         }
-        require(verified);
-        _;
+        return verified;
     }
 
     constructor() public {
@@ -96,7 +100,7 @@ contract DIDContract is MixinDidStorage, IDid {
         updateTime(did);
     }
 
-    function deactivateID(string memory did) override public verifyDIDSignature(did) {
+    function deactivateID(string memory did) override public onlyDIDOwner(did) {
         // set status to revoked
         setDIDStatus(did, REVOKED);
         // delete context
@@ -109,7 +113,7 @@ contract DIDContract is MixinDidStorage, IDid {
         updateTime(did);
     }
 
-    function addKey(string memory did, bytes memory newPubKey, string[] memory pubKeyController) override public verifyDIDSignature(did) {
+    function addKey(string memory did, bytes memory newPubKey, string[] memory pubKeyController) override public onlyDIDOwner(did) {
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
         uint keyIndex = data[pubKeyListKey].keys.length + 1;
         string memory pubKeyId = string(abi.encodePacked(did, "#keys-", StringUtils.uint2str(keyIndex)));
@@ -122,52 +126,52 @@ contract DIDContract is MixinDidStorage, IDid {
         updateTime(did);
     }
 
-    function deactivateKey(string memory did, bytes memory pubKey) override public verifyDIDSignature(did) {
+    function deactivateKey(string memory did, bytes memory pubKey) override public onlyDIDOwner(did) {
         PublicKey memory key = deserializePubKey(did, pubKey);
         appendPubKey(did, key);
         emit DeactivateKey(did, pubKey);
         updateTime(did);
     }
 
-    function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller) override public verifyDIDSignature(did) {
+    function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller) override public onlyDIDOwner(did) {
         authNewPubKey(did, pubKey, controller);
         updateTime(did);
     }
 
     function addNewAuthKeyByController(string memory did, bytes memory pubKey, string[] memory controller, string memory controllerSigner)
-    override public verifyDIDSignature(controllerSigner) {
+    override public onlyDIDOwner(controllerSigner) {
         authNewPubKey(did, pubKey, controller);
         updateTime(did);
     }
 
-    function setAuthKey(string memory did, bytes memory pubKey) override public verifyDIDSignature(did) {
+    function setAuthKey(string memory did, bytes memory pubKey) override public onlyDIDOwner(did) {
         authPubKey(did, pubKey);
         updateTime(did);
     }
 
     function setAuthKeyByController(string memory did, bytes memory pubKey, string memory controller)
-    override public verifyDIDSignature(controller) {
+    override public onlyDIDOwner(controller) {
         authPubKey(did, pubKey);
         updateTime(did);
     }
 
-    function deactivateAuthKey(string memory did, bytes memory pubKey) override public verifyDIDSignature(did) {
+    function deactivateAuthKey(string memory did, bytes memory pubKey) override public onlyDIDOwner(did) {
         deAuthPubKey(did, pubKey);
         updateTime(did);
     }
 
     function deactivateAuthKeyByController(string memory did, bytes memory pubKey, string memory controller)
-    override public verifyDIDSignature(controller) {
+    override public onlyDIDOwner(controller) {
         deAuthPubKey(did, pubKey);
         updateTime(did);
     }
 
-    function addContext(string memory did, string[] memory contexts) override public verifyDIDSignature(did) {
+    function addContext(string memory did, string[] memory contexts) override public onlyDIDOwner(did) {
         insertContext(did, contexts);
         updateTime(did);
     }
 
-    function removeContext(string memory did, string[] memory contexts) override public verifyDIDSignature(did) {
+    function removeContext(string memory did, string[] memory contexts) override public onlyDIDOwner(did) {
         string memory ctxKey = KeyUtils.genContextKey(did);
         for (uint i = 0; i < contexts.length; i++) {
             string memory ctx = contexts[i];
@@ -258,7 +262,7 @@ contract DIDContract is MixinDidStorage, IDid {
     function addController(string calldata did, string calldata controller)
     override
     external
-    verifyDIDSignature(did) verifyDIDFormat(did) verifyDIDFormat(controller) {
+    onlyDIDOwner(did) verifyDIDFormat(did) verifyDIDFormat(controller) {
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
         bool success = data[controllerKey].insert(key, bytes(controller));
@@ -272,7 +276,7 @@ contract DIDContract is MixinDidStorage, IDid {
     function removeController(string calldata did, string calldata controller)
     override
     external
-    verifyDIDSignature(did) verifyDIDFormat(did) verifyDIDFormat(controller) {
+    onlyDIDOwner(did) verifyDIDFormat(did) verifyDIDFormat(controller) {
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
         bool success = data[controllerKey].remove(key);
@@ -282,6 +286,7 @@ contract DIDContract is MixinDidStorage, IDid {
         }
     }
 
+    // TODO
     function VerifyController(string calldata did, string calldata controller)
     override
     external
@@ -308,7 +313,7 @@ contract DIDContract is MixinDidStorage, IDid {
     function addService(string calldata did, string calldata serviceId, string calldata serviceType, string calldata serviceEndpoint)
     override
     external
-    verifyDIDSignature(did) verifyDIDFormat(did){
+    onlyDIDOwner(did) verifyDIDFormat(did){
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
         bool success = data[serviceKey].insert(key, abi.encodePacked(serviceId, serviceType, serviceEndpoint));
@@ -321,7 +326,7 @@ contract DIDContract is MixinDidStorage, IDid {
     function updateService(string calldata did, string calldata serviceId, string calldata serviceType, string calldata serviceEndpoint)
     override
     external
-    verifyDIDSignature(did) verifyDIDFormat(did){
+    onlyDIDOwner(did) verifyDIDFormat(did){
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
         bool success = data[serviceKey].insert(key, abi.encodePacked(serviceId, serviceType, serviceEndpoint));
@@ -334,7 +339,7 @@ contract DIDContract is MixinDidStorage, IDid {
     function removeService(string calldata did, string calldata serviceId)
     override
     external
-    verifyDIDSignature(did) verifyDIDFormat(did){
+    onlyDIDOwner(did) verifyDIDFormat(did){
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
         bool success = data[serviceKey].remove(key);
