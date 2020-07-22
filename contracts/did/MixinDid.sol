@@ -49,6 +49,27 @@ contract DIDContract is MixinDidStorage, IDid {
     }
 
     modifier verifyDIDSignature(string memory did) {
+        bytes memory pubKey;
+        bool keyIsDeActivated;
+        bool keyIsAuth;
+        bool verified;
+        IterableMapping.itmap storage pubKeyList = data[KeyUtils.genPubKeyListKey(did)];
+        for (
+            uint i = pubKeyList.iterate_start();
+            pubKeyList.iterate_valid(i);
+            i = pubKeyList.iterate_next(i)
+        ) {
+            (, bytes memory pubKeyData) = pubKeyList.iterate_get(i);
+            (, , , pubKey, keyIsDeActivated, , keyIsAuth) = abi.decode(pubKeyData, (string, string, string[], bytes, bool, bool, bool));
+            if (keyIsDeActivated || !keyIsAuth) {
+                continue;
+            }
+            if (DidUtils.pubKeyToAddr(pubKey) == msg.sender) {
+                verified = true;
+                break;
+            }
+        }
+        require(verified);
         _;
     }
 
@@ -95,34 +116,18 @@ contract DIDContract is MixinDidStorage, IDid {
     }
 
     function deActiveKey(string memory did, bytes memory pubKey) override public verifyDIDSignature(did) {
-        string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey);
-        bytes memory pubKeyData = data[pubKeyListKey].data[pubKeyListSecondKey].value;
-        string memory id;
-        string memory keyType;
-        string[] memory controller;
-        bool deActivated;
-        bool isPubKey;
-        bool isAuth;
-        // if pubKeyData is empty, this will faile transaction
-        (id, keyType, controller, , deActivated, isPubKey, isAuth) = abi.decode(pubKeyData, (string, string, string[], bytes, bool, bool, bool));
-        require(!deActivated);
-        PublicKey memory key = PublicKey(id, keyType, controller, pubKey, true, isPubKey, isAuth);
+        PublicKey memory key = deserializePubKey(did, pubKey);
         appendPubKey(did, key);
         emit DeActiveKey(did, pubKey);
     }
 
     function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller) override public verifyDIDSignature(did) {
-        bool replaced = appendAuthKey(did, pubKey, controller, false, true);
-        require(!replaced, "pub key already existed");
-        emit AddNewAuthKey(did, pubKey, controller);
+        authNewPubKey(did, pubKey, controller);
     }
 
     function addNewAuthKeyByController(string memory did, bytes memory pubKey, string[] memory controller, string memory controllerSigner)
     override public verifyDIDSignature(controllerSigner) {
-        bool replaced = appendAuthKey(did, pubKey, controller, false, true);
-        require(!replaced, "pub key already existed");
-        emit AddNewAuthKey(did, pubKey, controller);
+        authNewPubKey(did, pubKey, controller);
     }
 
     function setAuthKey(string memory did, bytes memory pubKey) override public verifyDIDSignature(did) {
@@ -175,42 +180,43 @@ contract DIDContract is MixinDidStorage, IDid {
         insertContext(did, defaultCtx);
     }
 
-    function authPubKey(string memory did, bytes memory pubKey) private {
+    function authNewPubKey(string memory did, bytes memory pubKey, string[] memory controller) private {
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey);
-        bytes memory pubKeyData = data[pubKeyListKey].data[pubKeyListSecondKey].value;
-        bool isAuth;
-        string[] memory controller;
-        bool deActivated;
-        // if pubKeyData is empty, this will faile transaction
-        (, , controller, , deActivated, , isAuth) = abi.decode(pubKeyData, (string, string, string[], bytes, bool, bool, bool));
-        require(!deActivated);
-        require(!isAuth);
-        appendAuthKey(did, pubKey, controller, true, true);
+        uint keyIndex = data[pubKeyListKey].keys.length + 1;
+        string memory pubKeyId = string(abi.encodePacked(did, "#keys-", StringUtils.uint2str(keyIndex)));
+        PublicKey memory pub = PublicKey(pubKeyId, PUB_KEY_TYPE, controller, pubKey, false, false, true);
+        bool replaced = appendPubKey(did, pub);
+        require(!replaced, "key already existed");
+        emit AddNewAuthKey(did, pubKey, controller);
+    }
+
+    function authPubKey(string memory did, bytes memory pubKey) private {
+        PublicKey memory key = deserializePubKey(did, pubKey);
+        require(!key.deActivated);
+        require(!key.isAuth);
+        key.isAuth = true;
+        appendPubKey(did, key);
         emit SetAuthKey(did, pubKey);
     }
 
     function deAuthPubKey(string memory did, bytes memory pubKey) private {
-        string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey);
-        bytes memory pubKeyData = data[pubKeyListKey].data[pubKeyListSecondKey].value;
-        bool isAuth;
-        string[] memory controller;
-        bool deActivated;
-        // if pubKeyData is empty, this will faile transaction
-        (, , controller, , deActivated, , isAuth) = abi.decode(pubKeyData, (string, string, string[], bytes, bool, bool, bool));
-        require(!deActivated);
-        require(isAuth);
-        appendAuthKey(did, pubKey, controller, true, false);
+        PublicKey memory key = deserializePubKey(did, pubKey);
+        require(!key.deActivated);
+        require(key.isAuth);
+        key.isAuth = false;
+        appendPubKey(did, key);
         emit DeActiveAuthKey(did, pubKey);
     }
 
-    function appendAuthKey(string memory did, bytes memory pubKey, string[] memory controller, bool isPubKey, bool auth) private returns (bool){
+    function deserializePubKey(string memory did, bytes memory pubKey) private view returns (PublicKey memory) {
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-        uint keyIndex = data[pubKeyListKey].keys.length + 1;
-        string memory pubKeyId = string(abi.encodePacked(did, "#keys-", StringUtils.uint2str(keyIndex)));
-        PublicKey memory pub = PublicKey(pubKeyId, PUB_KEY_TYPE, controller, pubKey, false, isPubKey, auth);
-        return appendPubKey(did, pub);
+        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey);
+        bytes memory pubKeyData = data[pubKeyListKey].data[pubKeyListSecondKey].value;
+        require(pubKeyData.length > 0);
+        (string memory id, string memory keyType, string[] memory controller, , bool deActivated, bool isPubKey, bool isAuth)
+        = abi.decode(pubKeyData, (string, string, string[], bytes, bool, bool, bool));
+        PublicKey memory pub = PublicKey(id, keyType, controller, pubKey, deActivated, isPubKey, isAuth);
+        return pub;
     }
 
     function appendPubKey(string memory did, PublicKey memory pub) private returns (bool) {
