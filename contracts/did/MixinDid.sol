@@ -49,7 +49,7 @@ contract DIDContract is MixinDidStorage, IDid {
     }
 
     modifier onlyDIDOwner(string memory did) {
-        require(verifyDIDSignature(did));
+        require(verifyDIDSignature(did), "verify did signature failed");
         _;
     }
 
@@ -286,14 +286,14 @@ contract DIDContract is MixinDidStorage, IDid {
         }
     }
 
-    // TODO
     function VerifyController(string calldata did, string calldata controller)
     override
     external
     verifyDIDFormat(did) verifyDIDFormat(controller) returns(bool){
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
-        return data[controllerKey].contains(key);
+        require(data[controllerKey].contains(key), "the did can not be controlled by this controller!");
+        return verifyDIDSignature(controller);
     }
 
 
