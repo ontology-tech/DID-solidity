@@ -53,7 +53,7 @@ contract DIDContract is MixinDidStorage, IDid {
         _;
     }
 
-    function verifyDIDSignature(string memory did) private view returns(bool) {
+    function verifyDIDSignature(string memory did) private view returns (bool) {
         bytes memory pubKey;
         bool keyIsDeActivated;
         bool keyIsAuth;
@@ -259,10 +259,10 @@ contract DIDContract is MixinDidStorage, IDid {
         }
     }
 
-    function addController(string calldata did, string calldata controller)
+    function addController(string memory did, string memory controller)
     override
-    external
-    onlyDIDOwner(did) verifyDIDFormat(did) verifyDIDFormat(controller) {
+    public
+    onlyDIDOwner(did) verifyDIDFormat(did) {
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
         bool success = data[controllerKey].insert(key, bytes(controller));
@@ -273,10 +273,10 @@ contract DIDContract is MixinDidStorage, IDid {
     }
 
 
-    function removeController(string calldata did, string calldata controller)
+    function removeController(string memory did, string memory controller)
     override
-    external
-    onlyDIDOwner(did) verifyDIDFormat(did) verifyDIDFormat(controller) {
+    public
+    onlyDIDOwner(did) {
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
         bool success = data[controllerKey].remove(key);
@@ -286,10 +286,10 @@ contract DIDContract is MixinDidStorage, IDid {
         }
     }
 
-    function VerifyController(string calldata did, string calldata controller)
+    function VerifyController(string memory did, string memory controller)
     override
-    external
-    verifyDIDFormat(did) verifyDIDFormat(controller) returns(bool){
+    public
+    returns (bool){
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
         require(data[controllerKey].contains(key), "the did can not be controlled by this controller!");
@@ -310,10 +310,10 @@ contract DIDContract is MixinDidStorage, IDid {
         data[updateTimekey].insert(key, abi.encodePacked(now));
     }
 
-    function addService(string calldata did, string calldata serviceId, string calldata serviceType, string calldata serviceEndpoint)
+    function addService(string memory did, string memory serviceId, string memory serviceType, string memory serviceEndpoint)
     override
-    external
-    onlyDIDOwner(did) verifyDIDFormat(did){
+    public
+    onlyDIDOwner(did) {
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
         bool success = data[serviceKey].insert(key, abi.encodePacked(serviceId, serviceType, serviceEndpoint));
@@ -323,10 +323,10 @@ contract DIDContract is MixinDidStorage, IDid {
         }
     }
 
-    function updateService(string calldata did, string calldata serviceId, string calldata serviceType, string calldata serviceEndpoint)
+    function updateService(string memory did, string memory serviceId, string memory serviceType, string memory serviceEndpoint)
     override
-    external
-    onlyDIDOwner(did) verifyDIDFormat(did){
+    public
+    onlyDIDOwner(did) {
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
         bool success = data[serviceKey].insert(key, abi.encodePacked(serviceId, serviceType, serviceEndpoint));
@@ -336,10 +336,10 @@ contract DIDContract is MixinDidStorage, IDid {
         }
     }
 
-    function removeService(string calldata did, string calldata serviceId)
+    function removeService(string memory did, string memory serviceId)
     override
-    external
-    onlyDIDOwner(did) verifyDIDFormat(did){
+    public
+    onlyDIDOwner(did) {
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
         bool success = data[serviceKey].remove(key);

@@ -73,5 +73,5 @@ interface IDid {
 
     function removeController(string calldata did, string calldata controller) external;
 
-    function VerifyController(string calldata did, string calldata controller) external returns(bool);
+    function VerifyController(string calldata did, string calldata controller) external returns (bool);
 }
