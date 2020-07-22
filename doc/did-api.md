@@ -388,6 +388,11 @@ getAllController
 ----|-----|----|-------
 0  | did | string | 查询的DID
 
+返回值
+编号 | 名称 | 类型   | 说明
+----|-----|----|-------
+0  | controllerList | string[] | 查询结果
+
 
 #### 查询service列表
 
@@ -399,6 +404,10 @@ getAllService
 ----|-----|----|-------
 0  | did | string | 查询的DID
 
+返回值
+编号 | 名称 | 类型   | 说明
+----|-----|----|-------
+0  | serviceList | string[] | 查询结果
 
 #### 查询创建时间
 
@@ -410,6 +419,12 @@ getCreatedTime
 ----|-----|----|-------
 0  | did | string | 查询的DID
 
+返回值
+编号 | 名称 | 类型   | 说明
+----|-----|----|-------
+0  | createTime | uint | 查询结果
+
+
 #### 查询更新时间
 
 getUpdatedTime
@@ -419,3 +434,8 @@ getUpdatedTime
 编号 | 名称 | 类型   | 说明
 ----|-----|----|-------
 0  | did | string | 查询的DID
+
+返回值
+编号 | 名称 | 类型   | 说明
+----|-----|----|-------
+0  | updateTime | uint | 查询结果

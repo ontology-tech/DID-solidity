@@ -65,6 +65,8 @@ interface IDid {
 
     function removeService(string calldata did, string calldata serviceId) external;
 
+    function getAllService(string calldata did) external returns (string[] memory);
+
     event AddController(string indexed did, string controller);
     event RemoveController(string indexed did, string controller);
 
@@ -74,4 +76,11 @@ interface IDid {
     function removeController(string calldata did, string calldata controller) external;
 
     function VerifyController(string calldata did, string calldata controller) external returns (bool);
+
+    function getAllController(string calldata did) external returns (string[] memory);
+
+    function getCreateTime(string calldata did) external returns (uint);
+
+    function getUpdateTime(string calldata did) external returns (uint);
+
 }

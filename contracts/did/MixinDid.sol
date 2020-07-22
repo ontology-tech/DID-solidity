@@ -7,7 +7,7 @@ import "./MixinDidStorage.sol";
 import "../libs/KeyUtils.sol";
 import "../libs/StringUtils.sol";
 
-contract DIDContract is MixinDidStorage, IDid {
+abstract contract DIDContract is MixinDidStorage, IDid {
 
     struct PublicKey {
         string id;
@@ -296,6 +296,24 @@ contract DIDContract is MixinDidStorage, IDid {
         return verifyDIDSignature(controller);
     }
 
+    function getAllController(string memory did)
+    override
+    public
+    returns (string[] memory) {
+        IterableMapping.itmap storage controllerList = data[KeyUtils.genControllerKey(did)];
+        string[] memory controllerRes;
+        uint count = 0;
+        for (
+            uint i = controllerList.iterate_start();
+            controllerList.iterate_valid(i);
+            i = controllerList.iterate_next(i)
+        ) {
+            (, bytes memory controller) = controllerList.iterate_get(i);
+            controllerRes[count] = string(controller);
+            count++;
+        }
+        return controllerRes;
+    }
 
     function createTime(string memory did) private {
         string memory createTimekey = KeyUtils.genCreateTimeKey(did);
@@ -303,11 +321,29 @@ contract DIDContract is MixinDidStorage, IDid {
         data[createTimekey].insert(key, abi.encodePacked(now));
     }
 
+    function getCreateTime(string memory did)
+    override
+    public
+    returns (uint) {
+        string memory createTimekey = KeyUtils.genCreateTimeKey(did);
+        bytes32 key = KeyUtils.genCreateTimeSecondKey();
+        return abi.decode(data[createTimekey].data[key].value, (uint));
+    }
+
 
     function updateTime(string memory did) private {
         string memory updateTimekey = KeyUtils.genUpdateTimeKey(did);
         bytes32 key = KeyUtils.genCreateTimeSecondKey();
         data[updateTimekey].insert(key, abi.encodePacked(now));
+    }
+
+    function getUpdateTime(string memory did)
+    override
+    public
+    returns (uint) {
+        string memory updateTimekey = KeyUtils.genUpdateTimeKey(did);
+        bytes32 key = KeyUtils.genCreateTimeSecondKey();
+        return abi.decode(data[updateTimekey].data[key].value, (uint));
     }
 
     function addService(string memory did, string memory serviceId, string memory serviceType, string memory serviceEndpoint)
@@ -348,4 +384,25 @@ contract DIDContract is MixinDidStorage, IDid {
             updateTime(did);
         }
     }
+
+    function getAllService(string memory did)
+    override
+    public
+    returns (string[] memory) {
+        IterableMapping.itmap storage serviceList = data[KeyUtils.genServiceKey(did)];
+        string[] memory serviceRes;
+        uint count = 0;
+        for (
+            uint i = serviceList.iterate_start();
+            serviceList.iterate_valid(i);
+            i = serviceList.iterate_next(i)
+        ) {
+            (, bytes memory service) = serviceList.iterate_get(i);
+            serviceRes[count] = string(service);
+            count++;
+        }
+        return serviceRes;
+    }
+
+
 }
