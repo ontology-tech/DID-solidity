@@ -56,31 +56,32 @@ interface IDid {
 
 
     event AddService(string indexed did, string serviceId, string serviceType, string serviceEndpoint);
-    event UpdateService(string indexed did, string serviceId, string serviceType, string serviceEndpoint);
-    event RemoveService(string indexed did, string serviceId);
 
     function addService(string calldata did, string calldata serviceId, string calldata serviceType, string calldata serviceEndpoint) external;
 
+
+    event UpdateService(string indexed did, string serviceId, string serviceType, string serviceEndpoint);
+
     function updateService(string calldata did, string calldata serviceId, string calldata serviceType, string calldata serviceEndpoint) external;
+
+
+    event RemoveService(string indexed did, string serviceId);
 
     function removeService(string calldata did, string calldata serviceId) external;
 
     function getAllService(string calldata did) external returns (string[] memory);
 
     event AddController(string indexed did, string controller);
-    event RemoveController(string indexed did, string controller);
-
 
     function addController(string calldata did, string calldata controller) external;
 
+
+    event RemoveController(string indexed did, string controller);
+
     function removeController(string calldata did, string calldata controller) external;
 
-    function VerifyController(string calldata did, string calldata controller) external returns (bool);
+    // verify signature interface
+    function verifySignature(string calldata did) external returns (bool);
 
-    function getAllController(string calldata did) external returns (string[] memory);
-
-    function getCreateTime(string calldata did) external returns (uint);
-
-    function getUpdateTime(string calldata did) external returns (uint);
-
+    function verifyController(string calldata did, string calldata controller) external returns (bool);
 }

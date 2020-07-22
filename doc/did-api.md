@@ -301,7 +301,7 @@ event RemoveContext(string indexed did, string context);
 
 #### 验证签名
 
-VerifySignature
+verifySignature
 
 参数：
 
@@ -315,7 +315,7 @@ VerifySignature
 
 #### 验证控制人签名
 
-VerifyController
+verifyController
 
 参数：
 
@@ -330,7 +330,7 @@ VerifyController
 
 ### 查询接口
 
-#### 查询DID Document
+#### 查询DID Document(JSON)
 
 >note: 此接口暂未实现
 
@@ -345,6 +345,18 @@ getDocumentJson
 返回：DID对应的Document数据，该数据以JSON-LD方式组织。
 
 DID Document具体内容可以查询[DID规范v2](https://)。
+
+#### 查询DID Document
+
+getDocument
+
+参数：
+
+编号 | 名称 | 类型   | 说明
+----|-----|----|-------
+0  | did | string | 查询的DID
+
+返回：DID对应的Document数据。
 
 #### 查询context
 

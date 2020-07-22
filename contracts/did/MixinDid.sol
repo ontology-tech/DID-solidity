@@ -14,7 +14,7 @@ abstract contract DIDContract is MixinDidStorage, IDid {
         string keyType;
         string[] controller;
         bytes pubKey;
-        bool deActivated;
+        bool deactivated;
         bool isPubKey;
         bool isAuth;
     }
@@ -54,27 +54,13 @@ abstract contract DIDContract is MixinDidStorage, IDid {
     }
 
     function verifyDIDSignature(string memory did) private view returns (bool) {
-        bytes memory pubKey;
-        bool keyIsDeActivated;
-        bool keyIsAuth;
-        bool verified;
-        IterableMapping.itmap storage pubKeyList = data[KeyUtils.genPubKeyListKey(did)];
-        for (
-            uint i = pubKeyList.iterate_start();
-            pubKeyList.iterate_valid(i);
-            i = pubKeyList.iterate_next(i)
-        ) {
-            (, bytes memory pubKeyData) = pubKeyList.iterate_get(i);
-            (, , , pubKey, keyIsDeActivated, , keyIsAuth) = abi.decode(pubKeyData, (string, string, string[], bytes, bool, bool, bool));
-            if (keyIsDeActivated || !keyIsAuth) {
-                continue;
-            }
-            if (DidUtils.pubKeyToAddr(pubKey) == msg.sender) {
-                verified = true;
-                break;
+        PublicKey[] memory allAuthKey = getAllAuthKey(did);
+        for (uint i = 0; i < allAuthKey.length; i++) {
+            if (DidUtils.pubKeyToAddr(allAuthKey[i].pubKey) == msg.sender) {
+                return true;
             }
         }
-        return verified;
+        return false;
     }
 
     constructor() public {
@@ -184,6 +170,57 @@ abstract contract DIDContract is MixinDidStorage, IDid {
         updateTime(did);
     }
 
+    function addController(string memory did, string memory controller)
+    override
+    public
+    onlyDIDOwner(did) verifyDIDFormat(did) {
+        string memory controllerKey = KeyUtils.genControllerKey(did);
+        bytes32 key = KeyUtils.genControllerSecondKey(controller);
+        bool replaced = data[controllerKey].insert(key, bytes(controller));
+        require(!replaced, "controller already existed");
+        updateTime(did);
+        emit AddController(did, controller);
+    }
+
+
+    function removeController(string memory did, string memory controller) override public onlyDIDOwner(did) {
+        string memory controllerKey = KeyUtils.genControllerKey(did);
+        bytes32 key = KeyUtils.genControllerSecondKey(controller);
+        bool success = data[controllerKey].remove(key);
+        require(success, "controller not existed");
+        updateTime(did);
+        emit RemoveController(did, controller);
+    }
+
+    function addService(string memory did, string memory serviceId, string memory serviceType, string memory serviceEndpoint)
+    override public onlyDIDOwner(did) {
+        string memory serviceKey = KeyUtils.genServiceKey(did);
+        bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
+        bool replaced = data[serviceKey].insert(key, abi.encode(serviceId, serviceType, serviceEndpoint));
+        require(!replaced, "service already existed");
+        updateTime(did);
+        emit AddService(did, serviceId, serviceType, serviceEndpoint);
+    }
+
+    function updateService(string memory did, string memory serviceId, string memory serviceType, string memory serviceEndpoint)
+    override public onlyDIDOwner(did) {
+        string memory serviceKey = KeyUtils.genServiceKey(did);
+        bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
+        bool replaced = data[serviceKey].insert(key, abi.encode(serviceId, serviceType, serviceEndpoint));
+        require(replaced, "service not existed");
+        updateTime(did);
+        emit UpdateService(did, serviceId, serviceType, serviceEndpoint);
+    }
+
+    function removeService(string memory did, string memory serviceId) override public onlyDIDOwner(did) {
+        string memory serviceKey = KeyUtils.genServiceKey(did);
+        bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
+        bool success = data[serviceKey].remove(key);
+        require(success, "service not existed");
+        updateTime(did);
+        emit RemoveService(did, serviceId);
+    }
+
     function setDIDStatus(string memory did, byte _status) private {
         string memory statusKey = KeyUtils.genStatusKey(did);
         bytes32 statusSecondKey = KeyUtils.genStatusSecondKey();
@@ -214,7 +251,7 @@ abstract contract DIDContract is MixinDidStorage, IDid {
 
     function authPubKey(string memory did, bytes memory pubKey) private {
         PublicKey memory key = deserializePubKey(did, pubKey);
-        require(!key.deActivated);
+        require(!key.deactivated);
         require(!key.isAuth);
         key.isAuth = true;
         appendPubKey(did, key);
@@ -225,7 +262,7 @@ abstract contract DIDContract is MixinDidStorage, IDid {
 
     function deAuthPubKey(string memory did, bytes memory pubKey) private {
         PublicKey memory key = deserializePubKey(did, pubKey);
-        require(!key.deActivated);
+        require(!key.deactivated);
         require(key.isAuth);
         key.isAuth = false;
         appendPubKey(did, key);
@@ -239,16 +276,16 @@ abstract contract DIDContract is MixinDidStorage, IDid {
         bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey);
         bytes memory pubKeyData = data[pubKeyListKey].data[pubKeyListSecondKey].value;
         require(pubKeyData.length > 0);
-        (string memory id, string memory keyType, string[] memory controller, , bool deActivated, bool isPubKey, bool isAuth)
+        (string memory id, string memory keyType, string[] memory controller, , bool deactivated, bool isPubKey, bool isAuth)
         = abi.decode(pubKeyData, (string, string, string[], bytes, bool, bool, bool));
-        PublicKey memory pub = PublicKey(id, keyType, controller, pubKey, deActivated, isPubKey, isAuth);
+        PublicKey memory pub = PublicKey(id, keyType, controller, pubKey, deactivated, isPubKey, isAuth);
         return pub;
     }
 
     function appendPubKey(string memory did, PublicKey memory pub) private returns (bool) {
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
         bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pub.pubKey);
-        bytes memory encodedPubKey = abi.encode(pub.id, pub.keyType, pub.controller, pub.pubKey, pub.deActivated,
+        bytes memory encodedPubKey = abi.encode(pub.id, pub.keyType, pub.controller, pub.pubKey, pub.deactivated,
             pub.isPubKey, pub.isAuth);
         return data[pubKeyListKey].insert(pubKeyListSecondKey, encodedPubKey);
     }
@@ -277,150 +314,182 @@ abstract contract DIDContract is MixinDidStorage, IDid {
         }
     }
 
-    function addController(string memory did, string memory controller)
-    override
-    public
-    onlyDIDOwner(did) verifyDIDFormat(did) {
-        string memory controllerKey = KeyUtils.genControllerKey(did);
-        bytes32 key = KeyUtils.genControllerSecondKey(controller);
-        bool success = data[controllerKey].insert(key, bytes(controller));
-        if (success) {
-            emit AddController(did, controller);
-            updateTime(did);
-        }
-    }
-
-
-    function removeController(string memory did, string memory controller)
-    override
-    public
-    onlyDIDOwner(did) {
-        string memory controllerKey = KeyUtils.genControllerKey(did);
-        bytes32 key = KeyUtils.genControllerSecondKey(controller);
-        bool success = data[controllerKey].remove(key);
-        if (success) {
-            emit RemoveController(did, controller);
-            updateTime(did);
-        }
-    }
-
-    function VerifyController(string memory did, string memory controller)
-    override
-    public
-    returns (bool){
-        string memory controllerKey = KeyUtils.genControllerKey(did);
-        bytes32 key = KeyUtils.genControllerSecondKey(controller);
-        require(data[controllerKey].contains(key), "the did can not be controlled by this controller!");
-        return verifyDIDSignature(controller);
-    }
-
-    function getAllController(string memory did)
-    override
-    public
-    returns (string[] memory) {
-        IterableMapping.itmap storage controllerList = data[KeyUtils.genControllerKey(did)];
-        string[] memory controllerRes;
-        uint count = 0;
-        for (
-            uint i = controllerList.iterate_start();
-            controllerList.iterate_valid(i);
-            i = controllerList.iterate_next(i)
-        ) {
-            (, bytes memory controller) = controllerList.iterate_get(i);
-            controllerRes[count] = string(controller);
-            count++;
-        }
-        return controllerRes;
-    }
-
     function createTime(string memory did) private {
         string memory createTimekey = KeyUtils.genCreateTimeKey(did);
         bytes32 key = KeyUtils.genCreateTimeSecondKey();
-        data[createTimekey].insert(key, abi.encodePacked(now));
-    }
-
-    function getCreateTime(string memory did)
-    override
-    public
-    returns (uint) {
-        string memory createTimekey = KeyUtils.genCreateTimeKey(did);
-        bytes32 key = KeyUtils.genCreateTimeSecondKey();
-        return abi.decode(data[createTimekey].data[key].value, (uint));
+        data[createTimekey].insert(key, abi.encode(now));
     }
 
 
     function updateTime(string memory did) private {
         string memory updateTimekey = KeyUtils.genUpdateTimeKey(did);
         bytes32 key = KeyUtils.genCreateTimeSecondKey();
-        data[updateTimekey].insert(key, abi.encodePacked(now));
+        data[updateTimekey].insert(key, abi.encode(now));
     }
 
-    function getUpdateTime(string memory did)
-    override
-    public
-    returns (uint) {
-        string memory updateTimekey = KeyUtils.genUpdateTimeKey(did);
-        bytes32 key = KeyUtils.genCreateTimeSecondKey();
-        return abi.decode(data[updateTimekey].data[key].value, (uint));
+    function verifySignature(string memory did) override public returns (bool){
+        return verifyDIDSignature(did);
     }
 
-    function addService(string memory did, string memory serviceId, string memory serviceType, string memory serviceEndpoint)
-    override
-    public
-    onlyDIDOwner(did) {
-        string memory serviceKey = KeyUtils.genServiceKey(did);
-        bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
-        bool success = data[serviceKey].insert(key, abi.encodePacked(serviceId, serviceType, serviceEndpoint));
-        if (success) {
-            emit AddService(did, serviceId, serviceType, serviceEndpoint);
-            updateTime(did);
+    function verifyController(string memory did, string memory controller) override public returns (bool){
+        string memory controllerKey = KeyUtils.genControllerKey(did);
+        bytes32 key = KeyUtils.genControllerSecondKey(controller);
+        if (!data[controllerKey].contains(key)) {
+            return false;
         }
+        return verifyDIDSignature(controller);
     }
 
-    function updateService(string memory did, string memory serviceId, string memory serviceType, string memory serviceEndpoint)
-    override
-    public
-    onlyDIDOwner(did) {
-        string memory serviceKey = KeyUtils.genServiceKey(did);
-        bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
-        bool success = data[serviceKey].insert(key, abi.encodePacked(serviceId, serviceType, serviceEndpoint));
-        if (success) {
-            emit UpdateService(did, serviceId, serviceType, serviceEndpoint);
-            updateTime(did);
+    function getAllPubKey(string memory did) verifyDIDFormat(did) public view returns (PublicKey[] memory) {
+        string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
+        IterableMapping.itmap storage pubKeyList = data[pubKeyListKey];
+        // first loop to calculate dynamic array size
+        uint validKeySize = 0;
+        PublicKey[] memory allKey = new PublicKey[](pubKeyList.size);
+        uint count = 0;
+        for (
+            uint i = pubKeyList.iterate_start();
+            pubKeyList.iterate_valid(i);
+            i = pubKeyList.iterate_next(i)
+        ) {
+            (, bytes memory pubKeyData) = pubKeyList.iterate_get(i);
+            (string memory id, string memory keyType, string[] memory controller, bytes memory pubKey, bool deactivated, bool isPubKey, bool isAuth)
+            = abi.decode(pubKeyData, (string, string, string[], bytes, bool, bool, bool));
+            allKey[count] = PublicKey(id, keyType, controller, pubKey, deactivated, isPubKey, isAuth);
+            count++;
+            if (deactivated || !isPubKey) {
+                continue;
+            }
+            validKeySize++;
         }
-    }
-
-    function removeService(string memory did, string memory serviceId)
-    override
-    public
-    onlyDIDOwner(did) {
-        string memory serviceKey = KeyUtils.genServiceKey(did);
-        bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
-        bool success = data[serviceKey].remove(key);
-        if (success) {
-            emit RemoveService(did, serviceId);
-            updateTime(did);
+        // second loop to filter result
+        PublicKey[] memory result = new PublicKey[](validKeySize);
+        count = 0;
+        for (uint i = 0; i < allKey.length; i++) {
+            if (!allKey[i].deactivated && allKey[i].isPubKey) {
+                result[count] = allKey[i];
+                count++;
+            }
         }
+        return result;
     }
 
-    function getAllService(string memory did)
-    override
-    public
-    returns (string[] memory) {
-        IterableMapping.itmap storage serviceList = data[KeyUtils.genServiceKey(did)];
-        string[] memory serviceRes;
+    function getAllAuthKey(string memory did) verifyDIDFormat(did) public view returns (PublicKey[] memory) {
+        string memory authOrderKey = KeyUtils.genAuthOrderKey(did);
+        IterableMapping.itmap storage authOrder = data[authOrderKey];
+        PublicKey[] memory result = new PublicKey[](authOrder.size);
+        IterableMapping.itmap storage pubKeyList = data[KeyUtils.genPubKeyListKey(did)];
+        uint count = 0;
+        for (
+            uint i = authOrder.iterate_start();
+            authOrder.iterate_valid(i);
+            i = authOrder.iterate_next(i)
+        ) {
+            (, bytes memory pubkey) = authOrder.iterate_get(i);
+            bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubkey);
+            bytes memory pubKeyData = pubKeyList.data[pubKeyListSecondKey].value;
+            (string memory id, string memory keyType, string[] memory controller, bytes memory pubKey, bool deactivated, bool isPubKey, bool isAuth)
+            = abi.decode(pubKeyData, (string, string, string[], bytes, bool, bool, bool));
+            result[count] = PublicKey(id, keyType, controller, pubKey, deactivated, isPubKey, isAuth);
+            count++;
+        }
+        return result;
+    }
+
+    function getContext(string memory did) verifyDIDFormat(did) public view returns (string[] memory) {
+        string memory ctxListKey = KeyUtils.genContextKey(did);
+        IterableMapping.itmap storage ctxList = data[ctxListKey];
+        string[] memory result = new string[](ctxList.size);
+        uint count = 0;
+        for (
+            uint i = ctxList.iterate_start();
+            ctxList.iterate_valid(i);
+            i = ctxList.iterate_next(i)
+        ) {
+            (, bytes memory ctx) = ctxList.iterate_get(i);
+            result[count] = string(ctx);
+            count++;
+        }
+        return result;
+    }
+
+    function getAllController(string memory did) verifyDIDFormat(did) public view returns (string[] memory){
+        string memory contollerListKey = KeyUtils.genControllerKey(did);
+        IterableMapping.itmap storage controllerList = data[contollerListKey];
+        string[] memory result = new string[](controllerList.size);
+        uint count = 0;
+        for (
+            uint i = controllerList.iterate_start();
+            controllerList.iterate_valid(i);
+            i = controllerList.iterate_next(i)
+        ) {
+            (, bytes memory ctx) = controllerList.iterate_get(i);
+            result[count] = string(ctx);
+            count++;
+        }
+        return result;
+    }
+
+    struct Service {
+        string serviceId;
+        string serviceType;
+        string serviceEndpoint;
+    }
+
+    function getAllService(string memory did) verifyDIDFormat(did) public view returns (Service[] memory){
+        string memory serviceKey = KeyUtils.genServiceKey(did);
+        IterableMapping.itmap storage serviceList = data[serviceKey];
+        Service[] memory result = new Service[](serviceList.size);
         uint count = 0;
         for (
             uint i = serviceList.iterate_start();
             serviceList.iterate_valid(i);
             i = serviceList.iterate_next(i)
         ) {
-            (, bytes memory service) = serviceList.iterate_get(i);
-            serviceRes[count] = string(service);
+            (, bytes memory serviceData) = serviceList.iterate_get(i);
+            (string memory serviceId, string memory serviceType, string memory serviceEndpoint) =
+            abi.decode(serviceData, (string, string, string));
+            result[count] = Service(serviceId, serviceType, serviceEndpoint);
             count++;
         }
-        return serviceRes;
+        return result;
     }
 
+    function getCreatedTime(string memory did) verifyDIDFormat(did) public view returns (uint){
+        string memory createTimekey = KeyUtils.genCreateTimeKey(did);
+        bytes32 key = KeyUtils.genCreateTimeSecondKey();
+        bytes memory time = data[createTimekey].data[key].value;
+        return abi.decode(time, (uint));
+    }
 
+    function getUpdatedTime(string memory did) verifyDIDFormat(did) public view returns (uint){
+        string memory updateTimekey = KeyUtils.genUpdateTimeKey(did);
+        bytes32 key = KeyUtils.genCreateTimeSecondKey();
+        bytes memory time = data[updateTimekey].data[key].value;
+        return abi.decode(time, (uint));
+    }
+
+    struct DIDDocument {
+        string[] context;
+        string id;
+        PublicKey[] publicKey;
+        PublicKey[] authentication;
+        string[] controller;
+        Service[] service;
+        uint created;
+        uint updated;
+    }
+
+    function getDocument(string memory did) verifyDIDFormat(did) public view returns (DIDDocument memory){
+        string[] memory context = getContext(did);
+        PublicKey[] memory publicKey = getAllPubKey(did);
+        PublicKey[] memory authentication = getAllAuthKey(did);
+        string[] memory controller = getAllController(did);
+        Service[] memory service = getAllService(did);
+        uint created = getCreatedTime(did);
+        uint updated = getUpdatedTime(did);
+        DIDDocument memory document = DIDDocument(context, did, publicKey, authentication, controller, service, created,
+            updated);
+        return document;
+    }
 }

@@ -28,6 +28,15 @@ library KeyUtils {
         return keccak256(pubKey);
     }
 
+    function genAuthOrderKey(string memory did) public pure returns (string memory){
+        return string(abi.encodePacked(did, bytes("authOrder")));
+    }
+
+    // auth order store authentication key order, hash(pubKey) => pubKey
+    function genAuthOrderSecondKey(bytes memory pubKey) public pure returns (bytes32){
+        return keccak256(pubKey);
+    }
+
     function genControllerKey(string memory did) internal pure returns (string memory) {
         return string(abi.encodePacked(did, "controller"));
     }
