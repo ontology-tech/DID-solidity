@@ -28,19 +28,35 @@ library KeyUtils {
         return keccak256(pubKey);
     }
 
-    function genControllerKey(string memory did) internal pure returns (byte32) {
-        return keccak256(abi.encodePacked(did, "controller"));
+    function genControllerKey(string memory did) internal pure returns (string memory) {
+        return string(abi.encodePacked(did, "controller"));
     }
 
-    function genServiceKey(string memory did) internal pure returns (bytes) {
-        return keccak256(abi.encodePacked(did, "service"));
+    function genControllerSecondKey(string memory controller) public pure returns (bytes32){
+        return keccak256(bytes(controller));
     }
 
-    function genCreateTime(string memory did) internal pure returns (byte32) {
-        return keccak256(abi.encodePacked(did, "createTime"));
+    function genServiceKey(string memory did) internal pure returns (string memory) {
+        return string(abi.encodePacked(did, "service"));
     }
 
-    function genUpdateTime(string memory did) internal pure returns (byte32) {
-        return keccak256(abi.encodePacked(did, "updateTime"));
+    function genServiceSecondKey(string memory did, string memory serviceId) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(did, serviceId));
+    }
+
+    function genCreateTimeKey(string memory did) internal pure returns (string memory) {
+        return string(abi.encodePacked(did, "createTime"));
+    }
+
+    function genCreateTimeSecondKey() internal pure returns (bytes32) {
+        return keccak256("createTime");
+    }
+
+    function genUpdateTimeKey(string memory did) internal pure returns (string memory) {
+        return string(abi.encodePacked(did, "updateTime"));
+    }
+
+    function genUpdateTimeSecondKey() internal pure returns (bytes32) {
+        return keccak256("updateTime");
     }
 }

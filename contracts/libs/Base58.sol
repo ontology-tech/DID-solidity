@@ -4,15 +4,15 @@ library Base58 {
 
     bytes constant ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
-    function toBase58(bytes source) constant returns (bytes) {
+    function toBase58(bytes memory source) internal pure returns (bytes memory) {
         if (source.length == 0) return new bytes(0);
         uint8[] memory digits = new uint8[](40);
         //TODO: figure out exactly how much is needed
         digits[0] = 0;
         uint8 digitlength = 1;
-        for (var i = 0; i < source.length; ++i) {
+        for (uint i = 0; i < source.length; ++i) {
             uint carry = uint8(source[i]);
-            for (var j = 0; j < digitlength; ++j) {
+            for (uint j = 0; j < digitlength; ++j) {
                 carry += uint(digits[j]) * 256;
                 digits[j] = uint8(carry % 58);
                 carry = carry / 58;
@@ -28,25 +28,25 @@ library Base58 {
         return toAlphabet(reverse(truncate(digits, digitlength)));
     }
 
-    function toAlphabet(uint8[] indices) returns (bytes) {
+    function toAlphabet(uint8[] memory indices) internal pure returns (bytes memory) {
         bytes memory output = new bytes(indices.length);
-        for (var i = 0; i < indices.length; i++) {
+        for (uint i = 0; i < indices.length; i++) {
             output[i] = ALPHABET[indices[i]];
         }
         return output;
     }
 
-    function truncate(uint8[] array, uint8 length) returns (uint8[]) {
+    function truncate(uint8[] memory array, uint8 length) internal pure returns (uint8[] memory) {
         uint8[] memory output = new uint8[](length);
-        for (var i = 0; i < length; i++) {
+        for (uint i = 0; i < length; i++) {
             output[i] = array[i];
         }
         return output;
     }
 
-    function reverse(uint8[] input) returns (uint8[]) {
+    function reverse(uint8[] memory input) internal pure returns (uint8[] memory) {
         uint8[] memory output = new uint8[](input.length);
-        for (var i = 0; i < input.length; i++) {
+        for (uint i = 0; i < input.length; i++) {
             output[i] = input[input.length - 1 - i];
         }
         return output;

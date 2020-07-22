@@ -55,23 +55,23 @@ interface IDid {
     function removeContext(string calldata did, string[] calldata context) external;
 
 
-    function addService(string did, string serviceId, string serviceType, string serviceEndpoint) external;
+    event AddService(string indexed did, string serviceId, string serviceType, string serviceEndpoint);
+    event UpdateService(string indexed did, string serviceId, string serviceType, string serviceEndpoint);
+    event RemoveService(string indexed did, string serviceId);
 
-    function addServiceByController(string did, string controller, string serviceId, string serviceType, string serviceEndpoint) external;
+    function addService(string calldata did, string calldata serviceId, string calldata serviceType, string calldata serviceEndpoint) external;
 
-    function updateService(string did, string serviceId, string serviceType, string serviceEndpoint) external;
+    function updateService(string calldata did, string calldata serviceId, string calldata serviceType, string calldata serviceEndpoint) external;
 
-    function updateServiceByController(string did, string controller, string serviceId, string serviceType, string serviceEndpoint) external;
+    function removeService(string calldata did, string calldata serviceId) external;
 
-    function removeService(string did, string serviceId) external;
+    event AddController(string indexed did, string controller);
+    event RemoveController(string indexed did, string controller);
 
-    function removeServiceByController(string did, string serviceId, string controller) external;
 
-    function addController(string did, string controller) external;
+    function addController(string calldata did, string calldata controller) external;
 
-    function addControllerByController(string did, string controller, string controllerSigner) external;
+    function removeController(string calldata did, string calldata controller) external;
 
-    function removeController(string did, string controller) external;
-
-    function removeControllerByController(string did, string controller, string signer) external;
+    function VerifyController(string calldata did, string calldata controller) external returns(bool);
 }

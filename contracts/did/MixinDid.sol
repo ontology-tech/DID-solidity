@@ -239,44 +239,87 @@ contract DIDContract is MixinDidStorage, IDid {
         }
     }
 
-    function addController(string did, string controller)
+    function addController(string calldata did, string calldata controller)
+    override
     external
-    returns (bool){
-        // verify did signature
-
-        // verify controller validity
-
-        return true;
+    verifyDIDSignature(did) verifyDIDFormat(did) verifyDIDFormat(controller) {
+        string memory controllerKey = KeyUtils.genControllerKey(did);
+        bytes32 key = KeyUtils.genControllerSecondKey(controller);
+        bool success = data[controllerKey].insert(key, bytes(controller));
+        if (success) {
+            emit AddController(did, controller);
+        }
     }
 
-    function addControllerByController(string id, string controller, string controllerSigner)
+
+    function removeController(string calldata did, string calldata controller)
+    override
     external
-    returns (bool){
-
-        return true;
+    verifyDIDSignature(did) verifyDIDFormat(did) verifyDIDFormat(controller) {
+        string memory controllerKey = KeyUtils.genControllerKey(did);
+        bytes32 key = KeyUtils.genControllerSecondKey(controller);
+        bool success = data[controllerKey].remove(key);
+        if (success) {
+            emit RemoveController(did, controller);
+        }
     }
 
-    function removeController(string id, string controller)
+    function VerifyController(string calldata did, string calldata controller)
+    override
     external
-    returns (bool){
-        return true;
+    verifyDIDFormat(did) verifyDIDFormat(controller) returns(bool){
+        string memory controllerKey = KeyUtils.genControllerKey(did);
+        bytes32 key = KeyUtils.genControllerSecondKey(controller);
+        return data[controllerKey].contains(key);
     }
 
-    function removeControllerByController(string id, string controller, string signer)
+
+    function createTime(string memory did) private {
+        string memory createTimekey = KeyUtils.genCreateTimeKey(did);
+        bytes32 key = KeyUtils.genCreateTimeSecondKey();
+        data[createTimekey].insert(key, abi.encodePacked(now));
+    }
+
+
+    function updateTime(string memory did) private {
+        string memory updateTimekey = KeyUtils.genUpdateTimeKey(did);
+        bytes32 key = KeyUtils.genCreateTimeSecondKey();
+        data[updateTimekey].insert(key, abi.encodePacked(now));
+    }
+
+    function addService(string calldata did, string calldata serviceId, string calldata serviceType, string calldata serviceEndpoint)
+    override
     external
-    returns (bool) {
-        return true;
+    verifyDIDSignature(did) verifyDIDFormat(did){
+        string memory serviceKey = KeyUtils.genServiceKey(did);
+        bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
+        bool success = data[serviceKey].insert(key, abi.encodePacked(serviceId, serviceType, serviceEndpoint));
+        if (success) {
+            emit AddService(did, serviceId, serviceType, serviceEndpoint);
+        }
     }
 
-    // TODO
-    function createTime(string did) private {
-        byte32 key = genCreateTime(did);
-        data.insert(key, now);
+    function updateService(string calldata did, string calldata serviceId, string calldata serviceType, string calldata serviceEndpoint)
+    override
+    external
+    verifyDIDSignature(did) verifyDIDFormat(did){
+        string memory serviceKey = KeyUtils.genServiceKey(did);
+        bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
+        bool success = data[serviceKey].insert(key, abi.encodePacked(serviceId, serviceType, serviceEndpoint));
+        if (success) {
+            emit UpdateService(did, serviceId, serviceType, serviceEndpoint);
+        }
     }
 
-    // TODO
-    function updateTime(string did) private {
-        byte32 key = genUpdateTime(did);
-        data.insert(key, now);
+    function removeService(string calldata did, string calldata serviceId)
+    override
+    external
+    verifyDIDSignature(did) verifyDIDFormat(did){
+        string memory serviceKey = KeyUtils.genServiceKey(did);
+        bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
+        bool success = data[serviceKey].remove(key);
+        if (success) {
+            emit RemoveService(did, serviceId);
+        }
     }
 }
