@@ -91,6 +91,9 @@ contract DIDContract is MixinDidStorage, IDid {
         appendPubKey(did, pub);
         // emit event
         emit Register(did);
+        // update createTime and updateTime
+        createTime(did);
+        updateTime(did);
     }
 
     function deactivateID(string memory did) override public verifyDIDSignature(did) {
@@ -102,6 +105,8 @@ contract DIDContract is MixinDidStorage, IDid {
         delete data[KeyUtils.genPubKeyListKey(did)];
         // TODO: clear other data
         emit Deactivate(did);
+        // updateTime
+        updateTime(did);
     }
 
     function addKey(string memory did, bytes memory newPubKey, string[] memory pubKeyController) override public verifyDIDSignature(did) {
@@ -113,43 +118,53 @@ contract DIDContract is MixinDidStorage, IDid {
         if (!replaced) {
             emit AddKey(did, newPubKey, pubKeyController);
         }
+        // updateTime
+        updateTime(did);
     }
 
     function deactivateKey(string memory did, bytes memory pubKey) override public verifyDIDSignature(did) {
         PublicKey memory key = deserializePubKey(did, pubKey);
         appendPubKey(did, key);
         emit DeactivateKey(did, pubKey);
+        updateTime(did);
     }
 
     function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller) override public verifyDIDSignature(did) {
         authNewPubKey(did, pubKey, controller);
+        updateTime(did);
     }
 
     function addNewAuthKeyByController(string memory did, bytes memory pubKey, string[] memory controller, string memory controllerSigner)
     override public verifyDIDSignature(controllerSigner) {
         authNewPubKey(did, pubKey, controller);
+        updateTime(did);
     }
 
     function setAuthKey(string memory did, bytes memory pubKey) override public verifyDIDSignature(did) {
         authPubKey(did, pubKey);
+        updateTime(did);
     }
 
     function setAuthKeyByController(string memory did, bytes memory pubKey, string memory controller)
     override public verifyDIDSignature(controller) {
         authPubKey(did, pubKey);
+        updateTime(did);
     }
 
     function deactivateAuthKey(string memory did, bytes memory pubKey) override public verifyDIDSignature(did) {
         deAuthPubKey(did, pubKey);
+        updateTime(did);
     }
 
     function deactivateAuthKeyByController(string memory did, bytes memory pubKey, string memory controller)
     override public verifyDIDSignature(controller) {
         deAuthPubKey(did, pubKey);
+        updateTime(did);
     }
 
     function addContext(string memory did, string[] memory contexts) override public verifyDIDSignature(did) {
         insertContext(did, contexts);
+        updateTime(did);
     }
 
     function removeContext(string memory did, string[] memory contexts) override public verifyDIDSignature(did) {
@@ -162,6 +177,7 @@ contract DIDContract is MixinDidStorage, IDid {
                 emit RemoveContext(did, ctx);
             }
         }
+        updateTime(did);
     }
 
     function setDIDStatus(string memory did, byte _status) private {
@@ -248,6 +264,7 @@ contract DIDContract is MixinDidStorage, IDid {
         bool success = data[controllerKey].insert(key, bytes(controller));
         if (success) {
             emit AddController(did, controller);
+            updateTime(did);
         }
     }
 
@@ -261,6 +278,7 @@ contract DIDContract is MixinDidStorage, IDid {
         bool success = data[controllerKey].remove(key);
         if (success) {
             emit RemoveController(did, controller);
+            updateTime(did);
         }
     }
 
@@ -296,6 +314,7 @@ contract DIDContract is MixinDidStorage, IDid {
         bool success = data[serviceKey].insert(key, abi.encodePacked(serviceId, serviceType, serviceEndpoint));
         if (success) {
             emit AddService(did, serviceId, serviceType, serviceEndpoint);
+            updateTime(did);
         }
     }
 
@@ -308,6 +327,7 @@ contract DIDContract is MixinDidStorage, IDid {
         bool success = data[serviceKey].insert(key, abi.encodePacked(serviceId, serviceType, serviceEndpoint));
         if (success) {
             emit UpdateService(did, serviceId, serviceType, serviceEndpoint);
+            updateTime(did);
         }
     }
 
@@ -320,6 +340,7 @@ contract DIDContract is MixinDidStorage, IDid {
         bool success = data[serviceKey].remove(key);
         if (success) {
             emit RemoveService(did, serviceId);
+            updateTime(did);
         }
     }
 }
