@@ -22,7 +22,7 @@ event Register(string indexed did);
 ### 注销DID
 #### 注销自主管理的DID
 
-deActiveID
+deactivateID
 
 参数：
 
@@ -32,7 +32,7 @@ deActiveID
 
 event:
 
-event DeActive(string indexed did);
+event Deactivate(string indexed did);
 
 ### 授权操作
 
@@ -92,7 +92,7 @@ event AddKey(string indexed did, bytes pubKey, string[] controller);
 
 #### 所有者废除公钥
 
-deActiveKey
+deactivateKey
 
 参数：
 
@@ -105,7 +105,7 @@ deActiveKey
 
 event:
 
-event DeActiveKey(string indexed did, bytes pubKey);
+event DeactivateKey(string indexed did, bytes pubKey);
 
 ### 认证公钥操作
 
@@ -181,7 +181,7 @@ event SetAuthKey(string indexed did, bytes pubKey);
 
 #### 删除认证公钥
 
-deActiveAuthKey
+deactivateAuthKey
 
 参数：
 
@@ -192,11 +192,11 @@ deActiveAuthKey
  
  event:
  
- event DeActiveAuthKey(string indexed did, bytes pubKey); 
+ event DeactivateAuthKey(string indexed did, bytes pubKey); 
 
 #### 删除认证公钥
 
-deActiveAuthKeyByController
+deactivateAuthKeyByController
 
 参数：
 
@@ -208,7 +208,7 @@ deActiveAuthKeyByController
 
 event:
  
-event DeActiveAuthKey(string indexed did, bytes pubKey);
+event DeactivateAuthKey(string indexed did, bytes pubKey);
 
 ### 服务入口操作
 

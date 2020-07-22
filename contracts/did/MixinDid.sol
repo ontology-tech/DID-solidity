@@ -93,7 +93,7 @@ contract DIDContract is MixinDidStorage, IDid {
         emit Register(did);
     }
 
-    function deActiveID(string memory did) override public verifyDIDSignature(did) {
+    function deactivateID(string memory did) override public verifyDIDSignature(did) {
         // set status to revoked
         setDIDStatus(did, REVOKED);
         // delete context
@@ -101,7 +101,7 @@ contract DIDContract is MixinDidStorage, IDid {
         // delete public key list
         delete data[KeyUtils.genPubKeyListKey(did)];
         // TODO: clear other data
-        emit DeActive(did);
+        emit Deactivate(did);
     }
 
     function addKey(string memory did, bytes memory newPubKey, string[] memory pubKeyController) override public verifyDIDSignature(did) {
@@ -115,10 +115,10 @@ contract DIDContract is MixinDidStorage, IDid {
         }
     }
 
-    function deActiveKey(string memory did, bytes memory pubKey) override public verifyDIDSignature(did) {
+    function deactivateKey(string memory did, bytes memory pubKey) override public verifyDIDSignature(did) {
         PublicKey memory key = deserializePubKey(did, pubKey);
         appendPubKey(did, key);
-        emit DeActiveKey(did, pubKey);
+        emit DeactivateKey(did, pubKey);
     }
 
     function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller) override public verifyDIDSignature(did) {
@@ -139,11 +139,11 @@ contract DIDContract is MixinDidStorage, IDid {
         authPubKey(did, pubKey);
     }
 
-    function deActiveAuthKey(string memory did, bytes memory pubKey) override public verifyDIDSignature(did) {
+    function deactivateAuthKey(string memory did, bytes memory pubKey) override public verifyDIDSignature(did) {
         deAuthPubKey(did, pubKey);
     }
 
-    function deActiveAuthKeyByController(string memory did, bytes memory pubKey, string memory controller)
+    function deactivateAuthKeyByController(string memory did, bytes memory pubKey, string memory controller)
     override public verifyDIDSignature(controller) {
         deAuthPubKey(did, pubKey);
     }
@@ -205,7 +205,7 @@ contract DIDContract is MixinDidStorage, IDid {
         require(key.isAuth);
         key.isAuth = false;
         appendPubKey(did, key);
-        emit DeActiveAuthKey(did, pubKey);
+        emit DeactivateAuthKey(did, pubKey);
     }
 
     function deserializePubKey(string memory did, bytes memory pubKey) private view returns (PublicKey memory) {

@@ -9,9 +9,9 @@ interface IDid {
     function regIDWithPublicKey(string calldata did, bytes calldata pubKey) external;
 
 
-    event DeActive(string indexed did);
+    event Deactivate(string indexed did);
 
-    function deActiveID(string calldata did) external;
+    function deactivateID(string calldata did) external;
 
 
     event AddKey(string indexed did, bytes pubKey, string[] controller);
@@ -19,9 +19,9 @@ interface IDid {
     function addKey(string calldata did, bytes calldata newPubKey, string[] calldata pubKeyController) external;
 
 
-    event DeActiveKey(string indexed did, bytes pubKey);
+    event DeactivateKey(string indexed did, bytes pubKey);
 
-    function deActiveKey(string calldata did, bytes calldata pubKey) external;
+    function deactivateKey(string calldata did, bytes calldata pubKey) external;
 
 
     event AddNewAuthKey(string indexed did, bytes pubKey, string[] controller);
@@ -38,11 +38,11 @@ interface IDid {
     function setAuthKeyByController(string calldata did, bytes calldata pubKey, string calldata controller) external;
 
 
-    event DeActiveAuthKey(string indexed did, bytes pubKey);
+    event DeactivateAuthKey(string indexed did, bytes pubKey);
 
-    function deActiveAuthKey(string calldata did, bytes calldata pubKey) external;
+    function deactivateAuthKey(string calldata did, bytes calldata pubKey) external;
 
-    function deActiveAuthKeyByController(string calldata did, bytes calldata pubKey, string calldata controller) external;
+    function deactivateAuthKeyByController(string calldata did, bytes calldata pubKey, string calldata controller) external;
 
 
     event AddContext(string indexed did, string context);
