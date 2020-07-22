@@ -19,31 +19,10 @@ event:
 
 event Register(string indexed did);
 
-#### 注册代理控制的DID
-
-regIDWithController
-
-参数：
-
-编号 |  名称 | 类型   | 说明 
-----|------|---|------- 
- 0  |  did | string  | 注册的DID
- 1  |  controller | string[]  | 代理控制人 
- 2 | signerDID | string | 签名控制人
-
-参数1的字节串即可以是一个或多个DID，参数2是参数1中的某个DID
-
-调用此接口需要提供代理控制人的有效签名。
-
-event:
-
-event Register(string indexed did);
-
-
 ### 注销DID
 #### 注销自主管理的DID
 
-revokeID
+deActiveID
 
 参数：
 
@@ -53,22 +32,7 @@ revokeID
 
 event:
 
-event Revoke(string indexed did);
-
-#### 废弃代理控制的DID
-
-revokeIDByController
-
-参数：
-
-编号 |  名称 | 类型   | 说明
-----|-------|---|-------
- 0  |  did | string  | 注册的DID
- 1  | controllerSigner | string | 签名控制人
-
-event:
-
-event Revoke(string indexed did);
+event DeActive(string indexed did);
 
 ### 授权操作
 
@@ -89,26 +53,6 @@ event:
 
 event AddController(string indexed did, string controller);
 
-
-#### 增加代理人
-
-addControllerByController
-
-参数:
-
-| 编号 | 名称 | 类型   | 说明       |
-| ---- | ----| --- | ---------- |
-| 0    | did | string | DID     |
-| 1    | controller | string | 代理控制人 |
-| 2    | controllerSigner | string | 签名控制人 |
-
-调用此接口需提供所有者的签名。
-
-event:
-
-event AddController(string indexed did, string controller);
-
-
 #### 撤销代理人
 
 removeController
@@ -119,24 +63,6 @@ removeController
 | ---- | ----|--- | ---------- |
 | 0    | did | string | DID     |
 | 1    | controller | string | 要移除的代理控制人 |
-
-调用此接口需提供所有者的签名。
-
-event:
-
-event RemoveController(string indexed did, string controller);
-
-#### 撤销代理人
-
-removeControllerByController
-
-参数:
-
-编号 |  名称 | 类型   | 说明
-----|-------|---|-------
- 0  |  did | string  | DID
- 1  |  controller | string | 要移除的代理控制人 
- 2 | controllerSigner | string | 签名控制人的DID 
 
 调用此接口需提供所有者的签名。
 
@@ -166,7 +92,7 @@ event AddKey(string indexed did, bytes pubKey, string[] controller);
 
 #### 所有者废除公钥
 
-removeKey
+deActiveKey
 
 参数：
 
@@ -179,44 +105,7 @@ removeKey
 
 event:
 
-event RemoveKey(string indexed did, bytes pubKey);
-
-#### 代理人添加公钥
-
-addKeyByController
-
-参数：
-
-编号 |  名称 | 类型   | 说明
-----|------|---|-------
- 0  |  did | string  | DID
- 1  | controller | string | 签名控制人 
- 2  |  newPubKey | bytes  | 添加的新公钥
- 3 | pubKeyController |string[]  | 公钥的controller（可选，默认为本ID）（新增）
-
-调用此接口需要提供代理控制人的有效签名。
-
-event:
-
-event AddKey(string indexed did, bytes pubKey, string[] controller);
-
-#### 代理人废除公钥
-
-removeKeyByController
-
-参数:
-
-| 编号 |  名称 | 类型   | 说明       |
-| ---- | ----| --- | ---------- |
-| 0    | did | string | DID     |
-| 1    | pubKey | bytes | 废除的公钥 |
-| 2    | controller | string | 签名控制人 |
-
-调用此接口需要提供代理控制人的有效签名。
-
-event:
-
-event RemoveKey(string indexed did, bytes pubKey);
+event DeActiveKey(string indexed did, bytes pubKey);
 
 ### 认证公钥操作
 
@@ -292,7 +181,7 @@ event SetAuthKey(string indexed did, bytes pubKey);
 
 #### 删除认证公钥
 
-removeAuthKey
+deActiveAuthKey
 
 参数：
 
@@ -303,11 +192,11 @@ removeAuthKey
  
  event:
  
- event RemoveAuthKey(string indexed did, bytes pubKey); 
+ event DeActiveAuthKey(string indexed did, bytes pubKey); 
 
 #### 删除认证公钥
 
-removeAuthKeyByController
+deActiveAuthKeyByController
 
 参数：
 
@@ -319,7 +208,7 @@ removeAuthKeyByController
 
 event:
  
-event RemoveAuthKey(string indexed did, bytes pubKey);
+event DeActiveAuthKey(string indexed did, bytes pubKey);
 
 ### 服务入口操作
 
@@ -340,24 +229,6 @@ addService
  
  event AddService(string indexed did, string serviceId, string serviceType, string serviceEndpoint);
 
-#### 添加服务入口
-
-addServiceByController
-
-参数：
-
-编号 |  名称 | 类型   | 说明
-----|-------| ---|-------
- 0  |  did | string  | DID
- 1 | controller | string | 签名控制人
- 2  |  serviceId | string  | 服务标识
- 3  |  serviceType | string  | 服务类型
- 4 | serviceEndpoint | string | endpoint
- 
-event:
- 
-event AddService(string indexed did, string serviceId, string serviceType, string serviceEndpoint);
-
 #### 更新服务入口
 
 updateService
@@ -375,24 +246,6 @@ updateService
  
  event UpdateService(string indexed did, string serviceId, string serviceType, string serviceEndpoint);
 
-#### 更新服务入口
-
-updateServiceByController
-
-参数：
-
-编号 |  名称 | 类型   | 说明
-----|-------| ---|-------
- 0  |  did | string  | DID
- 1 | controller | string | 签名控制人
- 2  |  serviceId | string  | 服务标识
- 3  |  serviceType | string  | 服务类型
- 4 | serviceEndpoint | string | endpoint
-
- event:
- 
- event UpdateService(string indexed did, string serviceId, string serviceType, string serviceEndpoint);
-
 #### 删除服务入口
 
 removeService
@@ -406,22 +259,6 @@ removeService
  
  event:
  
- event RemoveService(string indexed did, string serviceId);
-
-#### 删除服务入口
-
-removeServiceByController
-
-参数：
-
-编号 |  名称 | 类型   | 说明
-----|-------| ---|-------
- 0  |  did | string  | DID
- 1  |  serviceId | string  | 服务标识
- 2 | controller | string | 控制人
- 
- event:
-  
  event RemoveService(string indexed did, string serviceId);
 
 ### Context操作
@@ -443,25 +280,6 @@ event:
 
 event AddContext(string indexed did, string context);
 
-#### 添加自定义context
-
-addContextByController
-
-参数：
-
-编号 |  名称 | 类型   | 说明
-----|-------| ---|-------
- 0  |  did | string  | DID
- 1  | contexts | string[] | 添加的context列表
- 2 | controller | string | 控制人
-
-若列表中的某项context已在该DID中，则忽略该项。
-
-event:
-
-event AddContext(string indexed did, string context);
-
-
 #### 移除自定义context
 
 removeContext
@@ -472,24 +290,6 @@ removeContext
 ----|-------| ---|-------
  0  |  did | string  | DID
  1  | contexts | string[] | 添加的context列表
-
-若列表中的某项context不在该DID中，将被忽略。
-
-event:
-
-event RemoveContext(string indexed did, string context);
-
-#### 移除自定义context
-
-removeContextByController
-
-参数：
-
-编号 |  名称 | 类型   | 说明
-----|-------| ---|-------
- 0  |  did | string  | DID
- 1  | contexts | string[] | 添加的context列表
- 2 | controller | string | 控制人
 
 若列表中的某项context不在该DID中，将被忽略。
 
