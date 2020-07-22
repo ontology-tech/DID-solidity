@@ -207,6 +207,8 @@ abstract contract DIDContract is MixinDidStorage, IDid {
         PublicKey memory pub = PublicKey(pubKeyId, PUB_KEY_TYPE, controller, pubKey, false, false, true);
         bool replaced = appendPubKey(did, pub);
         require(!replaced, "key already existed");
+        bool authOrderReplaced = appendAuthOrder(did, pubKey);
+        require(!authOrderReplaced, "key already existed in auth order");
         emit AddNewAuthKey(did, pubKey, controller);
     }
 
@@ -216,6 +218,8 @@ abstract contract DIDContract is MixinDidStorage, IDid {
         require(!key.isAuth);
         key.isAuth = true;
         appendPubKey(did, key);
+        bool authOrderReplaced = appendAuthOrder(did, pubKey);
+        require(!authOrderReplaced, "key already existed in auth order");
         emit SetAuthKey(did, pubKey);
     }
 
@@ -225,6 +229,8 @@ abstract contract DIDContract is MixinDidStorage, IDid {
         require(key.isAuth);
         key.isAuth = false;
         appendPubKey(did, key);
+        bool removeAuthOrderSuccess = removeAuthOrder(did, pubKey);
+        require(removeAuthOrderSuccess, "remove auth order failed");
         emit DeactivateAuthKey(did, pubKey);
     }
 
@@ -245,6 +251,18 @@ abstract contract DIDContract is MixinDidStorage, IDid {
         bytes memory encodedPubKey = abi.encode(pub.id, pub.keyType, pub.controller, pub.pubKey, pub.deActivated,
             pub.isPubKey, pub.isAuth);
         return data[pubKeyListKey].insert(pubKeyListSecondKey, encodedPubKey);
+    }
+
+    function appendAuthOrder(string memory did, bytes memory pubKey) private returns (bool) {
+        string memory authOrderKey = KeyUtils.genAuthOrderKey(did);
+        bytes32 authOrderSecondKey = KeyUtils.genAuthOrderSecondKey(pubKey);
+        return data[authOrderKey].insert(authOrderSecondKey, pubKey);
+    }
+
+    function removeAuthOrder(string memory did, bytes memory pubKey) private returns (bool) {
+        string memory authOrderKey = KeyUtils.genAuthOrderKey(did);
+        bytes32 authOrderSecondKey = KeyUtils.genAuthOrderSecondKey(pubKey);
+        return data[authOrderKey].remove(authOrderSecondKey);
     }
 
     function insertContext(string memory did, string[] memory contexts) private {
