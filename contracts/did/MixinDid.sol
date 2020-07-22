@@ -93,10 +93,17 @@ abstract contract DIDContract is MixinDidStorage, IDid {
         delete data[KeyUtils.genContextKey(did)];
         // delete public key list
         delete data[KeyUtils.genPubKeyListKey(did)];
-        // TODO: clear other data
+        // delete auth order
+        delete data[KeyUtils.genAuthOrderKey(did)];
+        // delete controller
+        delete data[KeyUtils.genControllerKey(did)];
+        // delete service
+        delete data[KeyUtils.genServiceKey(did)];
+        // delete create time
+        delete data[KeyUtils.genCreateTimeKey(did)];
+        // delete update time
+        delete data[KeyUtils.genUpdateTimeKey(did)];
         emit Deactivate(did);
-        // updateTime
-        updateTime(did);
     }
 
     function addKey(string memory did, bytes memory newPubKey, string[] memory pubKeyController) override public onlyDIDOwner(did) {
