@@ -18,7 +18,7 @@ contract OwnedUpgradeabilityProxy is UpgradeabilityOwnerStorage, UpgradeabilityP
     /**
     * @dev the constructor sets the original owner of the contract to the sender account.
     */
-    function OwnedUpgradeabilityProxy() public {
+    constructor() public {
         setUpgradeabilityOwner(msg.sender);
     }
 
@@ -53,7 +53,7 @@ contract OwnedUpgradeabilityProxy is UpgradeabilityOwnerStorage, UpgradeabilityP
      * @param version representing the version name of the new i mplementation to be set.
      * @param implementation representing the address of the new implementation to be set.
      */
-    function upgradeTo(string version, address implementation) public onlyProxyOwner {
+    function upgradeTo(string memory version, address implementation) public onlyProxyOwner {
         _upgradeTo(version, implementation);
     }
 
@@ -65,8 +65,9 @@ contract OwnedUpgradeabilityProxy is UpgradeabilityOwnerStorage, UpgradeabilityP
      * @param data represents the msg.data to bet sent in the low level call. This parameter may include the function
      * signature of the implementation to be called with the needed payload
      */
-    function upgradeToAndCall(string version, address implementation, bytes data) payable public onlyProxyOwner {
+    function upgradeToAndCall(string memory version, address implementation, bytes memory data) payable public onlyProxyOwner {
         upgradeTo(version, implementation);
-        require(this.call.value(msg.value)(data));
+        (bool success,) = address(this).call{value : msg.value}(data);
+        require(success);
     }
 }

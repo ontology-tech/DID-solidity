@@ -3,7 +3,7 @@ pragma solidity ^0.6.0;
 
 library BytesUtils {
 
-    
+
     /* @notice      Convert bytes to address
     *  @param _bs   Source bytes: bytes length must be 20
     *  @return      Converted address from source bytes
@@ -12,32 +12,32 @@ library BytesUtils {
     {
         require(_bs.length == 20, "bytes length does not match address");
         assembly {
-            // for _bs, first word store _bs.length, second word store _bs.value
-            // load 32 bytes from mem[_bs+20], convert it into Uint160, meaning we take last 20 bytes as addr (address).
+        // for _bs, first word store _bs.length, second word store _bs.value
+        // load 32 bytes from mem[_bs+20], convert it into Uint160, meaning we take last 20 bytes as addr (address).
             addr := mload(add(_bs, 0x14))
         }
 
     }
-    
+
     /* @notice      Convert address to bytes
     *  @param _addr Address need to be converted
     *  @return      Converted bytes from address
     */
     function addressToBytes(address _addr) internal pure returns (bytes memory bs){
         assembly {
-            // Get a location of some free memory and store it in result as
-            // Solidity does for memory variables.
+        // Get a location of some free memory and store it in result as
+        // Solidity does for memory variables.
             bs := mload(0x40)
-            // Put 20 (address byte length) at the first word, the length of bytes for uint256 value
+        // Put 20 (address byte length) at the first word, the length of bytes for uint256 value
             mstore(bs, 0x14)
-            // logical shift left _a by 12 bytes, change _a from right-aligned to left-aligned
+        // logical shift left _a by 12 bytes, change _a from right-aligned to left-aligned
             mstore(add(bs, 0x20), shl(96, _addr))
-            // Update the free-memory pointer by padding our last write location to 32 bytes
+        // Update the free-memory pointer by padding our last write location to 32 bytes
             mstore(0x40, add(bs, 0x40))
-       }
+        }
     }
 
-    
+
 
     /* @notice              Compare if two bytes are equal, which are in storage and memory, seperately
                             Refer from https://github.com/summa-tx/bitcoin-spv/blob/master/solidity/contracts/BytesLib.sol#L368
@@ -49,58 +49,58 @@ library BytesUtils {
         bool success = true;
 
         assembly {
-            // we know _preBytes_offset is 0
+        // we know _preBytes_offset is 0
             let fslot := sload(_preBytes_slot)
-            // Arrays of 31 bytes or less have an even value in their slot,
-            // while longer arrays have an odd value. The actual length is
-            // the slot divided by two for odd values, and the lowest order
-            // byte divided by two for even values.
-            // If the slot is even, bitwise and the slot with 255 and divide by
-            // two to get the length. If the slot is odd, bitwise and the slot
-            // with -1 and divide by two.
+        // Arrays of 31 bytes or less have an even value in their slot,
+        // while longer arrays have an odd value. The actual length is
+        // the slot divided by two for odd values, and the lowest order
+        // byte divided by two for even values.
+        // If the slot is even, bitwise and the slot with 255 and divide by
+        // two to get the length. If the slot is odd, bitwise and the slot
+        // with -1 and divide by two.
             let slength := div(and(fslot, sub(mul(0x100, iszero(and(fslot, 1))), 1)), 2)
             let mlength := mload(_postBytes)
 
-            // if lengths don't match the arrays are not equal
+        // if lengths don't match the arrays are not equal
             switch eq(slength, mlength)
             case 1 {
-                // fslot can contain both the length and contents of the array
-                // if slength < 32 bytes so let's prepare for that
-                // v. http://solidity.readthedocs.io/en/latest/miscellaneous.html#layout-of-state-variables-in-storage
-                // slength != 0
+            // fslot can contain both the length and contents of the array
+            // if slength < 32 bytes so let's prepare for that
+            // v. http://solidity.readthedocs.io/en/latest/miscellaneous.html#layout-of-state-variables-in-storage
+            // slength != 0
                 if iszero(iszero(slength)) {
                     switch lt(slength, 32)
                     case 1 {
-                        // blank the last byte which is the length
+                    // blank the last byte which is the length
                         fslot := mul(div(fslot, 0x100), 0x100)
 
                         if iszero(eq(fslot, mload(add(_postBytes, 0x20)))) {
-                            // unsuccess:
+                        // unsuccess:
                             success := 0
                         }
                     }
                     default {
-                        // cb is a circuit breaker in the for loop since there's
-                        //  no said feature for inline assembly loops
-                        // cb = 1 - don't breaker
-                        // cb = 0 - break
+                    // cb is a circuit breaker in the for loop since there's
+                    //  no said feature for inline assembly loops
+                    // cb = 1 - don't breaker
+                    // cb = 0 - break
                         let cb := 1
 
-                        // get the keccak hash to get the contents of the array
+                    // get the keccak hash to get the contents of the array
                         mstore(0x0, _preBytes_slot)
                         let sc := keccak256(0x0, 0x20)
 
                         let mc := add(_postBytes, 0x20)
                         let end := add(mc, mlength)
 
-                        // the next line is the loop condition:
-                        // while(uint(mc < end) + cb == 2)
+                    // the next line is the loop condition:
+                    // while(uint(mc < end) + cb == 2)
                         for {} eq(add(lt(mc, end), cb), 2) {
                             sc := add(sc, 1)
                             mc := add(mc, 0x20)
                         } {
                             if iszero(eq(sload(sc), mload(mc))) {
-                                // unsuccess:
+                            // unsuccess:
                                 success := 0
                                 cb := 0
                             }
@@ -109,27 +109,27 @@ library BytesUtils {
                 }
             }
             default {
-                // unsuccess:
+            // unsuccess:
                 success := 0
             }
         }
 
         return success;
     }
-    
+
     function equal(bytes memory _preBytes, bytes memory _postBytes) internal pure returns (bool) {
         bool success = true;
 
         assembly {
             let length := mload(_preBytes)
 
-            // if lengths don't match the arrays are not equal
+        // if lengths don't match the arrays are not equal
             switch eq(length, mload(_postBytes))
             case 1 {
-                // cb is a circuit breaker in the for loop since there's
-                //  no said feature for inline assembly loops
-                // cb = 1 - don't breaker
-                // cb = 0 - break
+            // cb is a circuit breaker in the for loop since there's
+            //  no said feature for inline assembly loops
+            // cb = 1 - don't breaker
+            // cb = 0 - break
                 let cb := 1
 
                 let mc := add(_preBytes, 0x20)
@@ -143,16 +143,16 @@ library BytesUtils {
                     mc := add(mc, 0x20)
                     cc := add(cc, 0x20)
                 } {
-                    // if any of these checks fails then arrays are not equal
+                // if any of these checks fails then arrays are not equal
                     if iszero(eq(mload(mc), mload(cc))) {
-                        // unsuccess:
+                    // unsuccess:
                         success := 0
                         cb := 0
                     }
                 }
             }
             default {
-                // unsuccess:
+            // unsuccess:
                 success := 0
             }
         }
@@ -172,9 +172,9 @@ library BytesUtils {
         uint _start,
         uint _length
     )
-        internal
-        pure
-        returns (bytes memory)
+    internal
+    pure
+    returns (bytes memory)
     {
         require(_bytes.length >= (_start + _length));
 
@@ -183,31 +183,31 @@ library BytesUtils {
         assembly {
             switch iszero(_length)
             case 0 {
-                // Get a location of some free memory and store it in tempBytes as
-                // Solidity does for memory variables.
+            // Get a location of some free memory and store it in tempBytes as
+            // Solidity does for memory variables.
                 tempBytes := mload(0x40)
 
-                // The first word of the slice result is potentially a partial
-                // word read from the original array. To read it, we calculate
-                // the length of that partial word and start copying that many
-                // bytes into the array. The first word we copy will start with
-                // data we don't care about, but the last `lengthmod` bytes will
-                // land at the beginning of the contents of the new array. When
-                // we're done copying, we overwrite the full first word with
-                // the actual length of the slice.
-                // lengthmod <= _length % 32
+            // The first word of the slice result is potentially a partial
+            // word read from the original array. To read it, we calculate
+            // the length of that partial word and start copying that many
+            // bytes into the array. The first word we copy will start with
+            // data we don't care about, but the last `lengthmod` bytes will
+            // land at the beginning of the contents of the new array. When
+            // we're done copying, we overwrite the full first word with
+            // the actual length of the slice.
+            // lengthmod <= _length % 32
                 let lengthmod := and(_length, 31)
 
-                // The multiplication in the next line is necessary
-                // because when slicing multiples of 32 bytes (lengthmod == 0)
-                // the following copy loop was copying the origin's length
-                // and then ending prematurely not copying everything it should.
+            // The multiplication in the next line is necessary
+            // because when slicing multiples of 32 bytes (lengthmod == 0)
+            // the following copy loop was copying the origin's length
+            // and then ending prematurely not copying everything it should.
                 let mc := add(add(tempBytes, lengthmod), mul(0x20, iszero(lengthmod)))
                 let end := add(mc, _length)
 
                 for {
-                    // The multiplication in the next line has the same exact purpose
-                    // as the one above.
+                // The multiplication in the next line has the same exact purpose
+                // as the one above.
                     let cc := add(add(add(_bytes, lengthmod), mul(0x20, iszero(lengthmod))), _start)
                 } lt(mc, end) {
                     mc := add(mc, 0x20)
@@ -218,8 +218,8 @@ library BytesUtils {
 
                 mstore(tempBytes, _length)
 
-                //update free-memory pointer
-                //allocating the array padded to 32 bytes like the compiler does now
+            //update free-memory pointer
+            //allocating the array padded to 32 bytes like the compiler does now
                 mstore(0x40, and(add(mc, 31), not(31)))
             }
             //if we want a zero-length slice let's just return a zero-length array
@@ -233,7 +233,7 @@ library BytesUtils {
         return tempBytes;
     }
 
-    
+
     /**
      * @dev Returns true if `account` is a contract.
      *      Refer from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol#L18
@@ -257,7 +257,40 @@ library BytesUtils {
         bytes32 codehash;
         bytes32 accountHash = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
         // solhint-disable-next-line no-inline-assembly
-        assembly { codehash := extcodehash(account) }
+        assembly {codehash := extcodehash(account)}
         return (codehash != 0x0 && codehash != accountHash);
     }
+
+    // Convert an hexadecimal character to their value
+    function fromHexChar(uint8 c) public pure returns (uint8) {
+        if (byte(c) >= byte('0') && byte(c) <= byte('9')) {
+            return c - uint8(byte('0'));
+        }
+        if (byte(c) >= byte('a') && byte(c) <= byte('f')) {
+            return 10 + c - uint8(byte('a'));
+        }
+        if (byte(c) >= byte('A') && byte(c) <= byte('F')) {
+            return 10 + c - uint8(byte('A'));
+        }
+        revert();
+    }
+
+    // Convert an hexadecimal string to raw bytes
+    function fromHex(string memory s) public pure returns (bytes memory) {
+        bytes memory ss = bytes(s);
+        if (ss.length > 2) {
+            if (equal(slice(ss, 0, 2), bytes("0x"))) {
+                ss = slice(ss, 2, ss.length);
+            }
+        }
+        require(ss.length % 2 == 0);
+        // length must be even
+        bytes memory r = new bytes(ss.length / 2);
+        for (uint i = 0; i < ss.length / 2; ++i) {
+            r[i] = byte(fromHexChar(uint8(ss[2 * i])) * 16 +
+                fromHexChar(uint8(ss[2 * i + 1])));
+        }
+        return r;
+    }
+
 }

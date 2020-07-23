@@ -69,7 +69,6 @@ interface IDid {
 
     function removeService(string calldata did, string calldata serviceId) external;
 
-    function getAllService(string calldata did) external returns (string[] memory);
 
     event AddController(string indexed did, string controller);
 
@@ -79,6 +78,7 @@ interface IDid {
     event RemoveController(string indexed did, string controller);
 
     function removeController(string calldata did, string calldata controller) external;
+
 
     // verify signature interface
     function verifySignature(string calldata did) external returns (bool);

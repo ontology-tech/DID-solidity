@@ -16,14 +16,22 @@ contract UpgradeabilityProxy is Proxy, UpgradeabilityStorage {
     event Upgraded(string version, address indexed implementation);
 
     /**
+    * @dev Tells the address of the current implementation
+    * @return address of the current implementation
+    */
+    function implementation() override(Proxy, UpgradeabilityStorage) public view returns (address) {
+        return _implementation;
+    }
+
+    /**
     * @dev Upgrades the implementation address
     * @param version representing the version name of the new implementation to be set
-    * @param implementation representing the address of the new implementation to be set
+    * @param impl representing the address of the new implementation to be set
     */
-    function _upgradeTo(string version, address implementation) internal {
-        require(_implementation != implementation);
+    function _upgradeTo(string memory version, address impl) internal {
+        require(_implementation != impl);
         _version = version;
-        _implementation = implementation;
-        Upgraded(version, implementation);
+        _implementation = impl;
+        emit Upgraded(version, impl);
     }
 }
