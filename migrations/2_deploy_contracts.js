@@ -10,10 +10,10 @@ module.exports = async function (depolyer) {
     await depolyer.link(BytesUtils, DidUtils);
     await depolyer.deploy(DidUtils);
     await depolyer.deploy(KeyUtils);
-    await depolyer.link(DidUtils, MixinDid);
-    await depolyer.link(KeyUtils, MixinDid);
-    await depolyer.link(BytesUtils, MixinDid);
-    await depolyer.deploy(MixinDid);
+    await depolyer.link(DidUtils, DIDContract);
+    await depolyer.link(KeyUtils, DIDContract);
+    await depolyer.link(BytesUtils, DIDContract);
+    await depolyer.deploy(DIDContract);
     let proxy = await EternalStorageProxy.deployed();
     let did = await DIDContract.deployed();
     proxy.upgradeTo("v1.0.0", did.address);
