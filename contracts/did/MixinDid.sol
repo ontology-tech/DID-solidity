@@ -5,9 +5,9 @@ import "../libs/DidUtils.sol";
 import "../interface/IDid.sol";
 import "./MixinDidStorage.sol";
 import "../libs/KeyUtils.sol";
-import "../libs/StringUtils.sol";
+import "../libs/BytesUtils.sol";
 
-abstract contract DIDContract is MixinDidStorage, IDid {
+contract DIDContract is MixinDidStorage, IDid {
 
     struct PublicKey {
         string id;
@@ -109,7 +109,7 @@ abstract contract DIDContract is MixinDidStorage, IDid {
     function addKey(string memory did, bytes memory newPubKey, string[] memory pubKeyController) override public onlyDIDOwner(did) {
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
         uint keyIndex = data[pubKeyListKey].keys.length + 1;
-        string memory pubKeyId = string(abi.encodePacked(did, "#keys-", StringUtils.uint2str(keyIndex)));
+        string memory pubKeyId = string(abi.encodePacked(did, "#keys-", BytesUtils.uint2str(keyIndex)));
         PublicKey memory pub = PublicKey(pubKeyId, PUB_KEY_TYPE, pubKeyController, newPubKey, false, true, false);
         bool replaced = appendPubKey(did, pub);
         if (!replaced) {
@@ -247,7 +247,7 @@ abstract contract DIDContract is MixinDidStorage, IDid {
     function authNewPubKey(string memory did, bytes memory pubKey, string[] memory controller) private {
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
         uint keyIndex = data[pubKeyListKey].keys.length + 1;
-        string memory pubKeyId = string(abi.encodePacked(did, "#keys-", StringUtils.uint2str(keyIndex)));
+        string memory pubKeyId = string(abi.encodePacked(did, "#keys-", BytesUtils.uint2str(keyIndex)));
         PublicKey memory pub = PublicKey(pubKeyId, PUB_KEY_TYPE, controller, pubKey, false, false, true);
         bool replaced = appendPubKey(did, pub);
         require(!replaced, "key already existed");
