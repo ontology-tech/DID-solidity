@@ -346,11 +346,11 @@ contract DIDContract is MixinDidStorage, IDid {
         data[updateTimekey].insert(key, abi.encode(now));
     }
 
-    function verifySignature(string memory did) override public returns (bool){
+    function verifySignature(string memory did) public view returns (bool){
         return verifyDIDSignature(did);
     }
 
-    function verifyController(string memory did, string memory controller) override public returns (bool){
+    function verifyController(string memory did, string memory controller) public view returns (bool){
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
         if (!data[controllerKey].contains(key)) {
@@ -499,7 +499,8 @@ contract DIDContract is MixinDidStorage, IDid {
         uint updated;
     }
 
-    function getDocument(string memory did) verifyDIDFormat(did) public view returns (DIDDocument memory){
+    function getDocument(string memory did) verifyDIDFormat(did) public didActivated(did)
+    view returns (DIDDocument memory) {
         string[] memory context = getContext(did);
         PublicKey[] memory publicKey = getAllPubKey(did);
         PublicKey[] memory authentication = getAllAuthKey(did);
@@ -507,8 +508,7 @@ contract DIDContract is MixinDidStorage, IDid {
         Service[] memory service = getAllService(did);
         uint created = getCreatedTime(did);
         uint updated = getUpdatedTime(did);
-        DIDDocument memory document = DIDDocument(context, did, publicKey, authentication, controller, service, created,
+        return DIDDocument(context, did, publicKey, authentication, controller, service, created,
             updated);
-        return document;
     }
 }

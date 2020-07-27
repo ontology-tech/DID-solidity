@@ -78,10 +78,4 @@ interface IDid {
     event RemoveController(string did, string controller);
 
     function removeController(string calldata did, string calldata controller) external;
-
-
-    // verify signature interface
-    function verifySignature(string calldata did) external returns (bool);
-
-    function verifyController(string calldata did, string calldata controller) external returns (bool);
 }

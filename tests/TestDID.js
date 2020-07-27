@@ -184,6 +184,12 @@ contract('DID', (accounts) => {
             console.log(tx.logs[0].did, "deactivate", tx.logs[0].pubKey);
         }
     });
+    it('test get document', async () => {
+        let instance = await EternalStorageProxy.deployed();
+        let didContract = await DIDContract.at(instance.address);
+        let document = await didContract.getDocument(did);
+        console.log(document);
+    });
     it('deactivate did', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
