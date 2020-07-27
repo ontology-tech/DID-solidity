@@ -1,11 +1,13 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
+import "./BytesUtils.sol";
+
 library KeyUtils {
 
     // status represent DID activated("1") or revoked("0")
     function genStatusKey(string memory did) public pure returns (string memory){
-        return string(abi.encodePacked(did, bytes("status")));
+        return string(abi.encodePacked(BytesUtils.toLower(did), bytes("status")));
     }
 
     function genStatusSecondKey() public pure returns (bytes32){
@@ -13,7 +15,7 @@ library KeyUtils {
     }
 
     function genContextKey(string memory did) public pure returns (string memory){
-        return string(abi.encodePacked(did, bytes("@context")));
+        return string(abi.encodePacked(BytesUtils.toLower(did), bytes("@context")));
     }
 
     function genContextSecondKey(string memory ctx) public pure returns (bytes32){
@@ -21,7 +23,7 @@ library KeyUtils {
     }
 
     function genPubKeyListKey(string memory did) public pure returns (string memory){
-        return string(abi.encodePacked(did, bytes("publicKey")));
+        return string(abi.encodePacked(BytesUtils.toLower(did), bytes("publicKey")));
     }
 
     function genPubKeyListSecondKey(bytes memory pubKey) public pure returns (bytes32){
@@ -29,7 +31,7 @@ library KeyUtils {
     }
 
     function genAuthOrderKey(string memory did) public pure returns (string memory){
-        return string(abi.encodePacked(did, bytes("authOrder")));
+        return string(abi.encodePacked(BytesUtils.toLower(did), bytes("authOrder")));
     }
 
     // auth order store authentication key order, hash(pubKey) => pubKey
@@ -38,7 +40,7 @@ library KeyUtils {
     }
 
     function genControllerKey(string memory did) internal pure returns (string memory) {
-        return string(abi.encodePacked(did, "controller"));
+        return string(abi.encodePacked(BytesUtils.toLower(did), "controller"));
     }
 
     function genControllerSecondKey(string memory controller) public pure returns (bytes32){
@@ -46,15 +48,15 @@ library KeyUtils {
     }
 
     function genServiceKey(string memory did) internal pure returns (string memory) {
-        return string(abi.encodePacked(did, "service"));
+        return string(abi.encodePacked(BytesUtils.toLower(did), "service"));
     }
 
-    function genServiceSecondKey(string memory did, string memory serviceId) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(did, serviceId));
+    function genServiceSecondKey(string memory serviceId) internal pure returns (bytes32) {
+        return keccak256(bytes(serviceId));
     }
 
     function genCreateTimeKey(string memory did) internal pure returns (string memory) {
-        return string(abi.encodePacked(did, "createTime"));
+        return string(abi.encodePacked(BytesUtils.toLower(did), "createTime"));
     }
 
     function genCreateTimeSecondKey() internal pure returns (bytes32) {
@@ -62,7 +64,7 @@ library KeyUtils {
     }
 
     function genUpdateTimeKey(string memory did) internal pure returns (string memory) {
-        return string(abi.encodePacked(did, "updateTime"));
+        return string(abi.encodePacked(BytesUtils.toLower(did), "updateTime"));
     }
 
     function genUpdateTimeSecondKey() internal pure returns (bytes32) {

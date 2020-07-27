@@ -44,7 +44,15 @@ contract DIDContract is MixinDidStorage, IDid {
 
     modifier verifyDIDFormat(string memory did){
         require(DidUtils.verifyDIDFormat(did),
-            "verify did signature failed");
+            "verify did format failed");
+        _;
+    }
+
+    modifier verifyMultiDIDFormat(string[] memory dids){
+        for (uint i = 0; i < dids.length; i++) {
+            require(DidUtils.verifyDIDFormat(dids[i]),
+                "verify did format failed");
+        }
         _;
     }
 
@@ -77,13 +85,14 @@ contract DIDContract is MixinDidStorage, IDid {
         string memory pubKeyId = string(abi.encodePacked(did, "#keys-1"));
         string[] memory defaultController = new string[](1);
         defaultController[0] = did;
-        PublicKey memory pub = PublicKey(pubKeyId, PUB_KEY_TYPE, defaultController, pubKey, false, true, false);
+        PublicKey memory pub = PublicKey(pubKeyId, PUB_KEY_TYPE, defaultController, pubKey, false, true, true);
         appendPubKey(did, pub);
-        // emit event
-        emit Register(did);
+        appendAuthOrder(did, pubKey);
         // update createTime and updateTime
         createTime(did);
         updateTime(did);
+        // emit event
+        emit Register(did);
     }
 
     function deactivateID(string memory did) override public onlyDIDOwner(did) {
@@ -106,7 +115,9 @@ contract DIDContract is MixinDidStorage, IDid {
         emit Deactivate(did);
     }
 
-    function addKey(string memory did, bytes memory newPubKey, string[] memory pubKeyController) override public onlyDIDOwner(did) {
+    function addKey(string memory did, bytes memory newPubKey, string[] memory pubKeyController)
+    override public onlyDIDOwner(did) verifyMultiDIDFormat(pubKeyController) {
+        require(pubKeyController.length >= 1);
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
         uint keyIndex = data[pubKeyListKey].keys.length + 1;
         string memory pubKeyId = string(abi.encodePacked(did, "#keys-", BytesUtils.uint2str(keyIndex)));
@@ -126,13 +137,14 @@ contract DIDContract is MixinDidStorage, IDid {
         updateTime(did);
     }
 
-    function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller) override public onlyDIDOwner(did) {
+    function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller)
+    override public onlyDIDOwner(did) verifyMultiDIDFormat(controller) {
         authNewPubKey(did, pubKey, controller);
         updateTime(did);
     }
 
     function addNewAuthKeyByController(string memory did, bytes memory pubKey, string[] memory controller, string memory controllerSigner)
-    override public onlyDIDOwner(controllerSigner) {
+    override public onlyDIDOwner(controllerSigner) verifyMultiDIDFormat(controller) {
         authNewPubKey(did, pubKey, controller);
         updateTime(did);
     }
@@ -202,7 +214,7 @@ contract DIDContract is MixinDidStorage, IDid {
     function addService(string memory did, string memory serviceId, string memory serviceType, string memory serviceEndpoint)
     override public onlyDIDOwner(did) {
         string memory serviceKey = KeyUtils.genServiceKey(did);
-        bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
+        bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
         bool replaced = data[serviceKey].insert(key, abi.encode(serviceId, serviceType, serviceEndpoint));
         require(!replaced, "service already existed");
         updateTime(did);
@@ -212,7 +224,7 @@ contract DIDContract is MixinDidStorage, IDid {
     function updateService(string memory did, string memory serviceId, string memory serviceType, string memory serviceEndpoint)
     override public onlyDIDOwner(did) {
         string memory serviceKey = KeyUtils.genServiceKey(did);
-        bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
+        bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
         bool replaced = data[serviceKey].insert(key, abi.encode(serviceId, serviceType, serviceEndpoint));
         require(replaced, "service not existed");
         updateTime(did);
@@ -221,7 +233,7 @@ contract DIDContract is MixinDidStorage, IDid {
 
     function removeService(string memory did, string memory serviceId) override public onlyDIDOwner(did) {
         string memory serviceKey = KeyUtils.genServiceKey(did);
-        bytes32 key = KeyUtils.genServiceSecondKey(did, serviceId);
+        bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
         bool success = data[serviceKey].remove(key);
         require(success, "service not existed");
         updateTime(did);
@@ -240,7 +252,7 @@ contract DIDContract is MixinDidStorage, IDid {
     function setDefaultCtx(string memory did) private {
         string[] memory defaultCtx = new string[](2);
         defaultCtx[0] = "https://www.w3.org/ns/did/v1";
-        defaultCtx[1] = "https://www.near.org/did/v1";
+        defaultCtx[1] = "https://www.celo.org/did/v1";
         insertContext(did, defaultCtx);
     }
 

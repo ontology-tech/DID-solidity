@@ -1,2 +1,4 @@
 .idea
 build/
+tests/account.dat
+node_modules

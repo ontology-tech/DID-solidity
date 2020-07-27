@@ -280,7 +280,7 @@ library BytesUtils {
         bytes memory ss = bytes(s);
         if (ss.length > 2) {
             if (equal(slice(ss, 0, 2), bytes("0x"))) {
-                ss = slice(ss, 2, ss.length);
+                ss = slice(ss, 2, ss.length - 2);
             }
         }
         require(ss.length % 2 == 0);
@@ -310,5 +310,20 @@ library BytesUtils {
             _i /= 10;
         }
         return string(bstr);
+    }
+
+    function toLower(string memory str) public pure returns (string memory) {
+        bytes memory bStr = bytes(str);
+        bytes memory bLower = new bytes(bStr.length);
+        for (uint i = 0; i < bStr.length; i++) {
+            // Uppercase character...
+            if ((uint8(bStr[i]) >= 65) && (uint8(bStr[i]) <= 90)) {
+                // So we add 32 to make it lowercase
+                bLower[i] = bytes1(uint8(bStr[i]) + 32);
+            } else {
+                bLower[i] = bStr[i];
+            }
+        }
+        return string(bLower);
     }
 }
