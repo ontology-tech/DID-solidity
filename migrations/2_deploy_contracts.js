@@ -9,6 +9,7 @@ module.exports = async function (depolyer) {
     await depolyer.deploy(BytesUtils);
     await depolyer.link(BytesUtils, DidUtils);
     await depolyer.deploy(DidUtils);
+    await depolyer.link(BytesUtils, KeyUtils);
     await depolyer.deploy(KeyUtils);
     await depolyer.link(DidUtils, DIDContract);
     await depolyer.link(KeyUtils, DIDContract);
