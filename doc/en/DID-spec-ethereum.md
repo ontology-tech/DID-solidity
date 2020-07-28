@@ -20,18 +20,15 @@ The ABNF grammar used to generate the Ethereum DID identifier is as follows:
 
 ```
 eth-did   = "did:eth:" eth-specific-idstring
-eth-specific-idstring = *( 1*idchar ".") 2*idchar
-idchar    = %x30-39 / %x61-7A / "-" / "_"
+eth-specific-idstring = ["0x"] 40*40HEXDIG
 ```
-
-The maximum length of the `eth-specific-idstring` is 64.
 
 `did:eth:` denotes that Ethereum DIDs are decentralized identifiers conforming to [W3C DIDs specification](https://www.w3.org/TR/did-core/), and are  registered on the Ethereum blockchain.
 
 Below is an example of a Ethereum DID:
 
 ```
-did:eth:alice.eth
+did:eth:0xf269E60fF7280e3E11b7EEd7B76b5C005105D121
 ```
 
 ## Ethereum DID Registration and Deactivation
