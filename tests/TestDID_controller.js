@@ -13,7 +13,7 @@ contract('DID', (accounts) => {
         // register one did
         let hash = keccak256(Date.now().toString());
         let addr = "0x" + hash.substring(hash.length - 40, hash.length);
-        did = 'did:celo:' + addr;
+        did = 'did:eth:' + addr;
         console.log(did);
         let privKey = Buffer.from("515b4666f4329520309a8fc59de7f5af44829c9e5f5d51c281b294999fb3cd60", 'hex');
         pubKey = eth.privateToPublic(privKey);
@@ -27,7 +27,7 @@ contract('DID', (accounts) => {
         // use accounts[1] public key to register another did as controller
         hash = keccak256(Date.now().toString() + accounts[1]);
         addr = "0x" + hash.substring(hash.length - 40, hash.length);
-        controller = 'did:celo:' + addr;
+        controller = 'did:eth:' + addr;
         console.log(controller);
         privKey = Buffer.from("34654b1fb0ee17a235950fc2b8177af4e69730b180efad7b78b772740c2c6ca0", 'hex');
         controllerPubKey = eth.privateToPublic(privKey);

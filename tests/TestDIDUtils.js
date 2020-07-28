@@ -5,11 +5,11 @@ const DidUtils = artifacts.require("DidUtils");
 contract('DidUtils', (accounts) => {
     it("verify did format", async () => {
         let didUtils = await DidUtils.deployed();
-        let r1 = await didUtils.verifyDIDFormat("did:celo:0x4c78c9baff8cf573f1e6dfc11bf3a027934aa818");
-        let r2 = await didUtils.verifyDIDFormat("did:celo:4c78c9baff8cf573f1e6dfc11bf3a027934aa818");
-        let r3 = await didUtils.verifyDIDFormat(":celo:0x4c78c9baff8cf573f1e6dfc11bf3a027934aa818");
+        let r1 = await didUtils.verifyDIDFormat("did:eth:0x4c78c9baff8cf573f1e6dfc11bf3a027934aa818");
+        let r2 = await didUtils.verifyDIDFormat("did:eth:4c78c9baff8cf573f1e6dfc11bf3a027934aa818");
+        let r3 = await didUtils.verifyDIDFormat(":eth:0x4c78c9baff8cf573f1e6dfc11bf3a027934aa818");
         let r4 = await didUtils.verifyDIDFormat("did::0x4c78c9baff8cf573f1e6dfc11bf3a027934aa818");
-        let r5 = await didUtils.verifyDIDFormat("did:celo:0x4c78caff8cf573f1e6dfc11bf3a027934aa818");
+        let r5 = await didUtils.verifyDIDFormat("did:eth:0x4c78caff8cf573f1e6dfc11bf3a027934aa818");
         assert.equal(r1, true);
         assert.equal(r2, true);
         assert.equal(r3, false);

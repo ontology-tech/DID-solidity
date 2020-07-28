@@ -11,7 +11,7 @@ contract('DID', (accounts) => {
         let didContract = await DIDContract.at(instance.address);
         let hash = keccak256(Date.now().toString());
         let addr = "0x" + hash.substring(hash.length - 40, hash.length);
-        did = 'did:celo:' + addr;
+        did = 'did:eth:' + addr;
         console.log(did);
         let privKey = Buffer.from("515b4666f4329520309a8fc59de7f5af44829c9e5f5d51c281b294999fb3cd60", 'hex');
         pubKey = eth.privateToPublic(privKey);

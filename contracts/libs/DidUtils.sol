@@ -6,7 +6,7 @@ import "./BytesUtils.sol";
 
 library DidUtils {
 
-    // example: did:celo:0x5Ee76017be7F983a520a778B413758A9DB49cBe9, did:celo:5Ee76017be7F983a520a778B413758A9DB49cBe9
+    // example: did:eth:0x5Ee76017be7F983a520a778B413758A9DB49cBe9, did:eth:5Ee76017be7F983a520a778B413758A9DB49cBe9
     /**
    * @dev verify did format
    * @param did did
@@ -16,7 +16,7 @@ library DidUtils {
         if (didData.length < 49) {
             return false;
         }
-        bytes memory prefix = bytes("did:celo:");
+        bytes memory prefix = bytes("did:eth:");
         if (!BytesUtils.equal(BytesUtils.slice(didData, 0, prefix.length), prefix)) {
             return false;
         }
