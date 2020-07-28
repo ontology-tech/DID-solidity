@@ -7,6 +7,10 @@ import "./BytesUtils.sol";
 library DidUtils {
 
     // example: did:celo:0x5Ee76017be7F983a520a778B413758A9DB49cBe9, did:celo:5Ee76017be7F983a520a778B413758A9DB49cBe9
+    /**
+   * @dev verify did format
+   * @param did did
+   */
     function verifyDIDFormat(string memory did) public pure returns (bool){
         bytes memory didData = bytes(did);
         if (didData.length < 49) {
@@ -21,7 +25,11 @@ library DidUtils {
         return addressBytes.length == 20;
     }
 
-    function pubKeyToAddr(bytes memory pubkey) public pure returns (address){
-        return address(uint(keccak256(pubkey)));
+    /**
+   * @dev parse public key to address
+   * @param pubKey public key
+   */
+    function pubKeyToAddr(bytes memory pubKey) public pure returns (address){
+        return address(uint(keccak256(pubKey)));
     }
 }

@@ -3,7 +3,7 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 
-// define the interface of Did in this interface
+// define the interface and event of Did in this interface
 interface IDid {
     event Register(string did);
 

@@ -8,24 +8,35 @@ import "./MixinDidStorage.sol";
 import "../libs/KeyUtils.sol";
 import "../libs/BytesUtils.sol";
 
+/**
+ * @title DIDContract
+ * @dev This contract is did logic implementation
+ */
 contract DIDContract is MixinDidStorage, IDid {
 
+    // represent public key in did document
     struct PublicKey {
-        string id;
-        string keyType;
-        string[] controller;
-        bytes pubKey;
-        bool deactivated;
-        bool isPubKey;
-        bool isAuth;
+        string id; // public key id
+        string keyType; // public key type, in ethereum, the type is always EcdsaSecp256k1VerificationKey2019
+        string[] controller; // did array, has some permission
+        bytes pubKey; // public key
+        bool deactivated; // is deactivated or not
+        bool isPubKey; // existed in public key list or not
+        bool isAuth; // existed in authentication list or not
     }
 
+    /**
+    * @dev require did has not been registered, regardless of whether did is active or not
+    */
     modifier didNotExisted(string memory did) {
         require(!data[KeyUtils.genStatusKey(did)].contains(KeyUtils.genStatusSecondKey()),
             "did existed");
         _;
     }
 
+    /**
+    * @dev require did is active
+    */
     modifier didActivated(string memory did) {
         string memory statusKey = KeyUtils.genStatusKey(did);
         bytes32 statusSecondKey = KeyUtils.genStatusSecondKey();
@@ -37,18 +48,28 @@ contract DIDContract is MixinDidStorage, IDid {
         _;
     }
 
+    /**
+    * @dev require msg.sender pass his public key while invoke,
+    *      it means contract cannot invoke the function that modified by verifyPubKeySignature
+    */
     modifier verifyPubKeySignature(bytes memory pubKey){
         require(DidUtils.pubKeyToAddr(pubKey) == msg.sender,
             "verify pub key failed");
         _;
     }
 
+    /**
+    * @dev require did format is legal
+    */
     modifier verifyDIDFormat(string memory did){
         require(DidUtils.verifyDIDFormat(did),
             "verify did format failed");
         _;
     }
 
+    /**
+    * @dev require all did formats are legal
+    */
     modifier verifyMultiDIDFormat(string[] memory dids){
         for (uint i = 0; i < dids.length; i++) {
             require(DidUtils.verifyDIDFormat(dids[i]),
@@ -57,11 +78,19 @@ contract DIDContract is MixinDidStorage, IDid {
         _;
     }
 
+    /**
+    * @dev require msg.sender must be did,
+    * it means public key of msg.sender must be one of did authentication
+    */
     modifier onlyDIDOwner(string memory did) {
         require(verifyDIDSignature(did), "verify did signature failed");
         _;
     }
 
+    /**
+   * @dev verify there is one did authentication key sign this transaction
+   * @param did did
+   */
     function verifyDIDSignature(string memory did) private view returns (bool) {
         PublicKey[] memory allAuthKey = getAllAuthKey(did);
         for (uint i = 0; i < allAuthKey.length; i++) {
@@ -76,6 +105,11 @@ contract DIDContract is MixinDidStorage, IDid {
 
     }
 
+    /**
+   * @dev use public key to register did, the public key will be added into authentication list
+   * @param did did
+   * @param pubKey public key
+   */
     function regIDWithPublicKey(string memory did, bytes memory pubKey)
     override public verifyDIDFormat(did) verifyPubKeySignature(pubKey) didNotExisted(did) {
         // set status to activated
@@ -96,6 +130,11 @@ contract DIDContract is MixinDidStorage, IDid {
         emit Register(did);
     }
 
+    /**
+   * @dev deactivate did, delete all document data of this did, but record did has been registered,
+   *    it means this did cannot been registered in the future
+   * @param did did
+   */
     function deactivateID(string memory did) override public onlyDIDOwner(did) {
         // set status to revoked
         setDIDStatus(did, REVOKED);
@@ -116,6 +155,12 @@ contract DIDContract is MixinDidStorage, IDid {
         emit Deactivate(did);
     }
 
+    /**
+   * @dev add a new public key to did public key list only, the key doesn't enter authentication list
+   * @param did did
+   * @param newPubKey new public key
+   * @param pubKeyController controller of newPubKey, they are some did
+   */
     function addKey(string memory did, bytes memory newPubKey, string[] memory pubKeyController)
     override public onlyDIDOwner(did) verifyMultiDIDFormat(pubKeyController) {
         require(pubKeyController.length >= 1);
@@ -125,12 +170,17 @@ contract DIDContract is MixinDidStorage, IDid {
         PublicKey memory pub = PublicKey(pubKeyId, PUB_KEY_TYPE, pubKeyController, newPubKey, false, true, false);
         bool replaced = appendPubKey(did, pub);
         if (!replaced) {
+            // updateTime
+            updateTime(did);
             emit AddKey(did, newPubKey, pubKeyController);
         }
-        // updateTime
-        updateTime(did);
     }
 
+    /**
+   * @dev deactivate one key that existed in public key list
+   * @param did did
+   * @param pubKey public key
+   */
     function deactivateKey(string memory did, bytes memory pubKey) override public onlyDIDOwner(did) {
         PublicKey memory key = deserializePubKey(did, pubKey);
         appendPubKey(did, key);
@@ -138,45 +188,90 @@ contract DIDContract is MixinDidStorage, IDid {
         updateTime(did);
     }
 
+    /**
+   * @dev add a new public key to authentication list only, doesn't enter public key list
+   * @param did did
+   * @param pubKey the new public key
+   * @param controller controller of newPubKey, they are some did
+   */
     function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller)
     override public onlyDIDOwner(did) verifyMultiDIDFormat(controller) {
         authNewPubKey(did, pubKey, controller);
         updateTime(did);
     }
 
-    function addNewAuthKeyByController(string memory did, bytes memory pubKey, string[] memory controller, string memory controllerSigner)
-    override public onlyDIDOwner(controllerSigner) verifyMultiDIDFormat(controller) {
+    /**
+   * @dev controller add a new public key to authentication list only, doesn't enter public key list
+   * @param did did
+   * @param pubKey the new public key
+   * @param controller controller of newPubKey, they are some did
+   * @param controllerSigner tx signer should be one of did controller
+   */
+    function addNewAuthKeyByController(string memory did, bytes memory pubKey, string[] memory controller,
+        string memory controllerSigner) override public onlyDIDOwner(controllerSigner) verifyMultiDIDFormat(controller) {
         authNewPubKey(did, pubKey, controller);
         updateTime(did);
     }
 
+    /**
+   * @dev add one key existed in publicKey list to authentication list
+   * @param did did
+   * @param pubKey public key
+   */
     function setAuthKey(string memory did, bytes memory pubKey) override public onlyDIDOwner(did) {
         authPubKey(did, pubKey);
         updateTime(did);
     }
 
+    /**
+   * @dev controller add one key existed in publicKey list to authentication list
+   * @param did did
+   * @param pubKey public key
+   * @param controller one of did controller
+   */
     function setAuthKeyByController(string memory did, bytes memory pubKey, string memory controller)
     override public onlyDIDOwner(controller) {
         authPubKey(did, pubKey);
         updateTime(did);
     }
 
+    /**
+   * @dev remove one key form authentication list
+   * @param did did
+   * @param pubKey public key
+   */
     function deactivateAuthKey(string memory did, bytes memory pubKey) override public onlyDIDOwner(did) {
         deAuthPubKey(did, pubKey);
         updateTime(did);
     }
 
+    /**
+   * @dev controller remove one key from authentication list
+   * @param did did
+   * @param pubKey public key
+   * @param controller one of did controller
+   */
     function deactivateAuthKeyByController(string memory did, bytes memory pubKey, string memory controller)
     override public onlyDIDOwner(controller) {
         deAuthPubKey(did, pubKey);
         updateTime(did);
     }
 
+    /**
+   * @dev add context to did document
+   * @param did did
+   * @param contexts contexts
+   */
     function addContext(string memory did, string[] memory contexts) override public onlyDIDOwner(did) {
         insertContext(did, contexts);
         updateTime(did);
     }
 
+    /**
+   * @dev remove context from did document
+   * @param did did
+   * @param contexts contexts
+   */
     function removeContext(string memory did, string[] memory contexts) override public onlyDIDOwner(did) {
         string memory ctxKey = KeyUtils.genContextKey(did);
         for (uint i = 0; i < contexts.length; i++) {
@@ -190,6 +285,11 @@ contract DIDContract is MixinDidStorage, IDid {
         updateTime(did);
     }
 
+    /**
+   * @dev add one controller to did controller list
+   * @param did did
+   * @param controller one of did controller
+   */
     function addController(string memory did, string memory controller)
     override
     public
@@ -202,7 +302,11 @@ contract DIDContract is MixinDidStorage, IDid {
         emit AddController(did, controller);
     }
 
-
+    /**
+   * @dev remove controller from controller list
+   * @param did did
+   * @param controller one of did controller
+   */
     function removeController(string memory did, string memory controller) override public onlyDIDOwner(did) {
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
@@ -212,6 +316,13 @@ contract DIDContract is MixinDidStorage, IDid {
         emit RemoveController(did, controller);
     }
 
+    /**
+   * @dev add service to did service list
+   * @param did did
+   * @param serviceId service id
+   * @param serviceType service type
+   * @param serviceEndpoint service endpoint
+   */
     function addService(string memory did, string memory serviceId, string memory serviceType, string memory serviceEndpoint)
     override public onlyDIDOwner(did) {
         string memory serviceKey = KeyUtils.genServiceKey(did);
@@ -222,6 +333,13 @@ contract DIDContract is MixinDidStorage, IDid {
         emit AddService(did, serviceId, serviceType, serviceEndpoint);
     }
 
+    /**
+   * @dev update service
+   * @param did did
+   * @param serviceId service id
+   * @param serviceType service type
+   * @param serviceEndpoint service endpoint
+   */
     function updateService(string memory did, string memory serviceId, string memory serviceType, string memory serviceEndpoint)
     override public onlyDIDOwner(did) {
         string memory serviceKey = KeyUtils.genServiceKey(did);
@@ -232,6 +350,11 @@ contract DIDContract is MixinDidStorage, IDid {
         emit UpdateService(did, serviceId, serviceType, serviceEndpoint);
     }
 
+    /**
+   * @dev remove service
+   * @param did did
+   * @param serviceId service id
+   */
     function removeService(string memory did, string memory serviceId) override public onlyDIDOwner(did) {
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
@@ -241,6 +364,11 @@ contract DIDContract is MixinDidStorage, IDid {
         emit RemoveService(did, serviceId);
     }
 
+    /**
+   * @dev set did status, status is ACTIVATED or REVOKED
+   * @param did did
+   * @param _status did status
+   */
     function setDIDStatus(string memory did, byte _status) private {
         string memory statusKey = KeyUtils.genStatusKey(did);
         bytes32 statusSecondKey = KeyUtils.genStatusSecondKey();
@@ -249,11 +377,13 @@ contract DIDContract is MixinDidStorage, IDid {
         data[statusKey].insert(statusSecondKey, status);
     }
 
-    // TODO: confirm default context
+    /**
+   * @dev set default context, all did has these contexts
+   * @param did did
+   */
     function setDefaultCtx(string memory did) private {
-        string[] memory defaultCtx = new string[](2);
+        string[] memory defaultCtx = new string[](1);
         defaultCtx[0] = "https://www.w3.org/ns/did/v1";
-        defaultCtx[1] = "https://www.celo.org/did/v1";
         insertContext(did, defaultCtx);
     }
 
@@ -280,6 +410,11 @@ contract DIDContract is MixinDidStorage, IDid {
         emit SetAuthKey(did, pubKey);
     }
 
+    /**
+   * @dev remove public key from authentication list
+   * @param did did
+   * @param pubKey public key
+   */
     function deAuthPubKey(string memory did, bytes memory pubKey) private {
         PublicKey memory key = deserializePubKey(did, pubKey);
         require(!key.deactivated);
@@ -291,6 +426,11 @@ contract DIDContract is MixinDidStorage, IDid {
         emit DeactivateAuthKey(did, pubKey);
     }
 
+    /**
+   * @dev read storage public key and deserialize it to PublicKey struct
+   * @param did did
+   * @param pubKey public key
+   */
     function deserializePubKey(string memory did, bytes memory pubKey) private view returns (PublicKey memory) {
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
         bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey);
@@ -310,6 +450,11 @@ contract DIDContract is MixinDidStorage, IDid {
         return data[pubKeyListKey].insert(pubKeyListSecondKey, encodedPubKey);
     }
 
+    /**
+   * @dev authOrder used to sort authentication list
+   * @param did did
+   * @param pubKey authentication public key
+   */
     function appendAuthOrder(string memory did, bytes memory pubKey) private returns (bool) {
         string memory authOrderKey = KeyUtils.genAuthOrderKey(did);
         bytes32 authOrderSecondKey = KeyUtils.genAuthOrderSecondKey(pubKey);
@@ -334,6 +479,10 @@ contract DIDContract is MixinDidStorage, IDid {
         }
     }
 
+    /**
+   * @dev record did created time
+   * @param did did
+   */
     function createTime(string memory did) private {
         string memory createTimekey = KeyUtils.genCreateTimeKey(did);
         bytes32 key = KeyUtils.genCreateTimeSecondKey();
@@ -341,16 +490,29 @@ contract DIDContract is MixinDidStorage, IDid {
     }
 
 
+    /**
+   * @dev record did updated time
+   * @param did did
+   */
     function updateTime(string memory did) private {
-        string memory updateTimekey = KeyUtils.genUpdateTimeKey(did);
+        string memory updateTimeKey = KeyUtils.genUpdateTimeKey(did);
         bytes32 key = KeyUtils.genCreateTimeSecondKey();
-        data[updateTimekey].insert(key, abi.encode(now));
+        data[updateTimeKey].insert(key, abi.encode(now));
     }
 
+    /**
+   * @dev verify tx has signed by did
+   * @param did did
+   */
     function verifySignature(string memory did) public view returns (bool){
         return verifyDIDSignature(did);
     }
 
+    /**
+   * @dev verify tx has signed by did controller
+   * @param did did
+   * @param controller one of did controller
+   */
     function verifyController(string memory did, string memory controller) public view returns (bool){
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
@@ -360,6 +522,10 @@ contract DIDContract is MixinDidStorage, IDid {
         return verifyDIDSignature(controller);
     }
 
+    /**
+   * @dev query public key list
+   * @param did did
+   */
     function getAllPubKey(string memory did) verifyDIDFormat(did) public view returns (PublicKey[] memory) {
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
         IterableMapping.itmap storage pubKeyList = data[pubKeyListKey];
@@ -394,6 +560,10 @@ contract DIDContract is MixinDidStorage, IDid {
         return result;
     }
 
+    /**
+   * @dev query authentication list
+   * @param did did
+   */
     function getAllAuthKey(string memory did) verifyDIDFormat(did) public view returns (PublicKey[] memory) {
         string memory authOrderKey = KeyUtils.genAuthOrderKey(did);
         IterableMapping.itmap storage authOrder = data[authOrderKey];
@@ -416,6 +586,10 @@ contract DIDContract is MixinDidStorage, IDid {
         return result;
     }
 
+    /**
+   * @dev query context list
+   * @param did did
+   */
     function getContext(string memory did) verifyDIDFormat(did) public view returns (string[] memory) {
         string memory ctxListKey = KeyUtils.genContextKey(did);
         IterableMapping.itmap storage ctxList = data[ctxListKey];
@@ -433,6 +607,10 @@ contract DIDContract is MixinDidStorage, IDid {
         return result;
     }
 
+    /**
+   * @dev query controller list
+   * @param did did
+   */
     function getAllController(string memory did) verifyDIDFormat(did) public view returns (string[] memory){
         string memory contollerListKey = KeyUtils.genControllerKey(did);
         IterableMapping.itmap storage controllerList = data[contollerListKey];
@@ -456,6 +634,10 @@ contract DIDContract is MixinDidStorage, IDid {
         string serviceEndpoint;
     }
 
+    /**
+   * @dev query service list
+   * @param did did
+   */
     function getAllService(string memory did) verifyDIDFormat(did) public view returns (Service[] memory){
         string memory serviceKey = KeyUtils.genServiceKey(did);
         IterableMapping.itmap storage serviceList = data[serviceKey];
@@ -475,6 +657,10 @@ contract DIDContract is MixinDidStorage, IDid {
         return result;
     }
 
+    /**
+   * @dev query did created time
+   * @param did did
+   */
     function getCreatedTime(string memory did) verifyDIDFormat(did) public view returns (uint){
         string memory createTimekey = KeyUtils.genCreateTimeKey(did);
         bytes32 key = KeyUtils.genCreateTimeSecondKey();
@@ -482,6 +668,10 @@ contract DIDContract is MixinDidStorage, IDid {
         return abi.decode(time, (uint));
     }
 
+    /**
+   * @dev query did updated time
+   * @param did did
+   */
     function getUpdatedTime(string memory did) verifyDIDFormat(did) public view returns (uint){
         string memory updateTimekey = KeyUtils.genUpdateTimeKey(did);
         bytes32 key = KeyUtils.genCreateTimeSecondKey();
@@ -500,6 +690,10 @@ contract DIDContract is MixinDidStorage, IDid {
         uint updated;
     }
 
+    /**
+   * @dev query document
+   * @param did did
+   */
     function getDocument(string memory did) verifyDIDFormat(did) public didActivated(did)
     view returns (DIDDocument memory) {
         string[] memory context = getContext(did);

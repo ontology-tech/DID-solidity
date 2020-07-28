@@ -35,7 +35,10 @@ library KeyUtils {
         return string(abi.encodePacked(BytesUtils.toLower(did), bytes("authOrder")));
     }
 
-    // auth order store authentication key order, hash(pubKey) => pubKey
+    /**
+    * @dev auth order store authentication key order, hash(pubKey) => pubKey,
+    *   because authentication list must be orderly, so there is a field to record this order
+    */
     function genAuthOrderSecondKey(bytes memory pubKey) public pure returns (bytes32){
         return keccak256(pubKey);
     }

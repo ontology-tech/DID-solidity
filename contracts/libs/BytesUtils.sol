@@ -261,7 +261,11 @@ library BytesUtils {
         return (codehash != 0x0 && codehash != accountHash);
     }
 
-    // Convert an hexadecimal character to their value
+
+    /**
+   * @dev Convert an hexadecimal character to their value
+   * @param c char
+   */
     function fromHexChar(uint8 c) public pure returns (uint8) {
         if (byte(c) >= byte('0') && byte(c) <= byte('9')) {
             return c - uint8(byte('0'));
@@ -275,7 +279,10 @@ library BytesUtils {
         revert();
     }
 
-    // Convert an hexadecimal string to raw bytes
+    /**
+    * @dev  Convert an hexadecimal string to raw bytes
+    * @param s string
+    */
     function fromHex(string memory s) public pure returns (bytes memory) {
         bytes memory ss = bytes(s);
         if (ss.length > 2) {
@@ -293,6 +300,10 @@ library BytesUtils {
         return r;
     }
 
+    /**
+    * @dev  Convert uint to string
+    * @param _i uint
+    */
     function uint2str(uint _i) internal pure returns (string memory _uintAsString) {
         if (_i == 0) {
             return "0";
@@ -312,6 +323,10 @@ library BytesUtils {
         return string(bstr);
     }
 
+    /**
+    * @dev  Convert string to lowercase
+    * @param str string
+    */
     function toLower(string memory str) public pure returns (string memory) {
         bytes memory bStr = bytes(str);
         bytes memory bLower = new bytes(bStr.length);

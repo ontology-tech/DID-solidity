@@ -3,10 +3,13 @@ pragma solidity ^0.6.0;
 
 import "../libs/IterableMapping.sol";
 
-
+/**
+ * @title MixinDidStorage
+ * @dev This contract is did storage implementation
+ */
 contract MixinDidStorage {
     using IterableMapping for IterableMapping.itmap;
-    mapping(string => IterableMapping.itmap) public data;
+    mapping(string => IterableMapping.itmap) public data; // data storage
 
     byte public constant ACTIVATED = "1";
     byte public constant REVOKED = "0";
