@@ -1,6 +1,6 @@
-# UID Discovery 设计文档 —— solidity实现
+# DID-Ethereum-solidity 设计文档
 
-## 当前ONT ID的document结构
+## 当前DID的document结构
 
 ```json
 {
@@ -17,7 +17,7 @@
 
 ## 三层合约体系
 
-![image](./三层体系结构.png)
+![image](../structure.png)
 
 参考：https://blog.openzeppelin.com/proxy-patterns/
 
@@ -35,13 +35,11 @@
 
 ### Layer 3
 
-数据存储层，使用map存储数据。数据的存储格式为bytes，序列化方式为Ontology ZeroCopy。
+数据存储层，使用iterable map存储数据。数据的存储格式为bytes，序列化方式为Ontology ZeroCopy。
 
 ```solidity
 contract DataContract {
-    mapping(bytes32 => uint) uintData;
-    mapping(bytes32 => string) stringData;
-    mapping(byte32 => bytes) bytesData;
+    mapping(string => IterableMapping.itmap) public data; // data storage
     ...
 }
 ```

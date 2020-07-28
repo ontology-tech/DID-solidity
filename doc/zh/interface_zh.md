@@ -1,8 +1,6 @@
-# DID合约接口说明 
+# DID-Ethereum-solidity 接口文档
 
 ### 注册DID
-
-#### 注册自主管理的DID
 
 regIDWithPublicKey
 
@@ -13,14 +11,13 @@ regIDWithPublicKey
  0  | did | string  | 注册的DID
  1  | pubKey | bytes  | 所有者的公钥
 
-调用此接口需提供参数中的公钥对应私钥的签名。注册完成后此公钥即与DID绑定。
+需要使用`pubKey`对应的账户调用此接口，注册完成后此公钥即与DID绑定，并且具有Authentication权限。
 
 event:
 
 event Register(string indexed did);
 
 ### 注销DID
-#### 注销自主管理的DID
 
 deactivateID
 
@@ -28,7 +25,7 @@ deactivateID
 
 编号 |  名称 | 类型   | 说明
 ----|-------|---|-------
- 0  |  did | string  | 注册的DID
+ 0  |  did | string  | 注销的DID
 
 event:
 
@@ -47,7 +44,7 @@ addController
 | 0    | did | string | DID     |
 | 1    | controller | string | 代理控制人 |
 
-用公钥来增加代理人，调用此接口需提供所有者的签名。
+增加代理人，调用此接口需由DID的某个具有Authentication权限的公钥对应的私钥签名。
 
 event:
 
@@ -64,7 +61,7 @@ removeController
 | 0    | did | string | DID     |
 | 1    | controller | string | 要移除的代理控制人 |
 
-调用此接口需提供所有者的签名。
+移除代理人，调用此接口需由DID的某个具有Authentication权限的公钥对应的私钥签名。
 
 event:
 
@@ -72,7 +69,7 @@ event RemoveController(string indexed did, string controller);
 
 ### 公钥操作
 
-#### 所有者添加公钥
+#### 添加公钥
 
 addKey
 
@@ -84,13 +81,13 @@ addKey
  1  |  newPubKey | bytes  | 添加的新公钥
  2  |  pubKeyController | string[]  | 公钥的controller（可选，默认为本ID）（新增）
 
-调用此接口需提供所有者的签名，并通过参数2给出验签公钥。验签公钥必须已绑定到该ID。
+添加一把新公钥，该公钥不会拥有Authentication权限，调用此接口需由DID的某个具有Authentication权限的公钥对应的私钥签名。
 
 event:
 
 event AddKey(string indexed did, bytes pubKey, string[] controller);
 
-#### 所有者废除公钥
+#### 废除公钥
 
 deactivateKey
 
@@ -101,7 +98,7 @@ deactivateKey
  0  |  did | string  | DID
  1  |  pubKey | bytes  | 废除的公钥
 
-调用此接口需提供所有者的签名，并通过参数2给出验签公钥。验签公钥必须已绑定到该ID。
+废除一把公钥，调用此接口需由DID的某个具有Authentication权限的公钥对应的私钥签名。
 
 event:
 
@@ -121,7 +118,7 @@ addNewAuthKey
  1  |  pubKey | bytes  | 公钥
  2  | controller | string[] | 公钥控制人
 
-新公钥成功添加后，会自动分配一个公钥ID。
+添加一把新公钥，并且使其具有Authentication权限。
 
 event:
 
@@ -210,9 +207,9 @@ event:
  
 event DeactivateAuthKey(string indexed did, bytes pubKey);
 
-### 服务入口操作
+### 服务操作
 
-#### 添加服务入口
+#### 添加服务
 
 addService
 
@@ -223,13 +220,13 @@ addService
  0  |  did | string  | DID
  1  |  serviceId | string  | 服务标识
  2  |  serviceType | string  | 服务类型
- 3 | serviceEndpoint | string | endpoint
+ 3 | serviceEndpoint | string | service endpoint
  
  event:
  
  event AddService(string indexed did, string serviceId, string serviceType, string serviceEndpoint);
 
-#### 更新服务入口
+#### 更新服务
 
 updateService
 
@@ -240,13 +237,13 @@ updateService
  0  |  did | string  | DID
  1  |  serviceId | string  | 服务标识
  2  |  serviceType | string  | 服务类型
- 3 | serviceEndpoint | string | endpoint
+ 3 | serviceEndpoint | string | service endpoint
  
  event:
  
  event UpdateService(string indexed did, string serviceId, string serviceType, string serviceEndpoint);
 
-#### 删除服务入口
+#### 删除服务
 
 removeService
 
@@ -289,7 +286,7 @@ removeContext
 编号 |  名称 | 类型   | 说明
 ----|-------| ---|-------
  0  |  did | string  | DID
- 1  | contexts | string[] | 添加的context列表
+ 1  | contexts | string[] | 要移除的context列表
 
 若列表中的某项context不在该DID中，将被忽略。
 
@@ -305,11 +302,9 @@ verifySignature
 
 参数：
 
-编号 |  名称 | 类型   | 说明v
+编号 |  名称 | 类型   | 说明
 ----|-------| ---|-------
  0  |  did | string  | DID
-
-接口调用的交易需包含被验证的签名。
 
 返回：True/False
 
@@ -344,8 +339,6 @@ getDocumentJson
 
 返回：DID对应的Document数据，该数据以JSON-LD方式组织。
 
-DID Document具体内容可以查询[DID规范v2](https://)。
-
 #### 查询DID Document
 
 getDocument
@@ -356,7 +349,20 @@ getDocument
 ----|-----|----|-------
 0  | did | string | 查询的DID
 
-返回：DID对应的Document数据。
+返回：DID Document。
+
+```solidity
+    struct DIDDocument {
+        string[] context;
+        string id;
+        PublicKey[] publicKey;
+        PublicKey[] authentication;
+        string[] controller;
+        Service[] service;
+        uint created;
+        uint updated;
+    }
+```
 
 #### 查询context
 
@@ -368,6 +374,8 @@ getContext
 ----|-----|----|-------
 0  | did | string | 查询的DID
 
+返回：[]string
+
 #### 查询public key列表
 
 getAllPubKey
@@ -378,6 +386,19 @@ getAllPubKey
 ----|-----|----|-------
 0  | did | string | 查询的DID
 
+返回：[]PublicKey
+
+```solidity
+    struct PublicKey {
+        string id; // public key id
+        string keyType; // public key type, in ethereum, the type is always EcdsaSecp256k1VerificationKey2019
+        string[] controller; // did array, has some permission
+        bytes pubKey; // public key
+        bool deactivated; // is deactivated or not
+        bool isPubKey; // existed in public key list or not
+        bool isAuth; // existed in authentication list or not
+    }
+```
 
 #### 查询authentication列表
 
@@ -389,6 +410,7 @@ getAllAuthKey
 ----|-----|----|-------
 0  | did | string | 查询的DID
 
+返回：[]PublicKey
 
 #### 查询controller列表
 
@@ -400,11 +422,7 @@ getAllController
 ----|-----|----|-------
 0  | did | string | 查询的DID
 
-返回值
-编号 | 名称 | 类型   | 说明
-----|-----|----|-------
-0  | controllerList | string[] | 查询结果
-
+返回：[]string
 
 #### 查询service列表
 
@@ -416,10 +434,15 @@ getAllService
 ----|-----|----|-------
 0  | did | string | 查询的DID
 
-返回值
-编号 | 名称 | 类型   | 说明
-----|-----|----|-------
-0  | serviceList | string[] | 查询结果
+返回：[]Service
+
+```solidity
+    struct Service {
+        string serviceId;
+        string serviceType;
+        string serviceEndpoint;
+    }
+```
 
 #### 查询创建时间
 
@@ -431,11 +454,7 @@ getCreatedTime
 ----|-----|----|-------
 0  | did | string | 查询的DID
 
-返回值
-编号 | 名称 | 类型   | 说明
-----|-----|----|-------
-0  | createTime | uint | 查询结果
-
+返回：uint
 
 #### 查询更新时间
 
@@ -447,7 +466,4 @@ getUpdatedTime
 ----|-----|----|-------
 0  | did | string | 查询的DID
 
-返回值
-编号 | 名称 | 类型   | 说明
-----|-----|----|-------
-0  | updateTime | uint | 查询结果
+返回：uint

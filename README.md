@@ -1,11 +1,11 @@
 # UID-discovery-solidity
 
-## TODO: 
+## Design and Interface Document
 
-1. bitcoin base58 encode/decode
+We offer versions in two language:
 
-2. truncate and concate memory bytes efficiently
+[接口文档](doc/zh/interface_zh.md)
+[设计文档](doc/zh/design_zh.md)
 
-3. upgradable storage, link did storage and upgrade folder
-
-4. verify signature
+[interface document](doc/en/interface_en.md)
+[design document](doc/en/design_en.md)
