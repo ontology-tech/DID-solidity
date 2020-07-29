@@ -2,3 +2,6 @@
 build/
 tests/account.dat
 node_modules
+.secret
+package.json
+yarn.lock
