@@ -13,7 +13,7 @@ library DidUtils {
    */
     function verifyDIDFormat(string memory did) public pure returns (bool){
         bytes memory didData = bytes(did);
-        if (didData.length < 49) {
+        if (didData.length < 48) {
             return false;
         }
         bytes memory prefix = bytes("did:eth:");

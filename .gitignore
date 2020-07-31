@@ -5,3 +5,4 @@ node_modules
 .secret
 package.json
 yarn.lock
+.env
