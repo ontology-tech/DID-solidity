@@ -6,17 +6,17 @@ import "./BytesUtils.sol";
 
 library DidUtils {
 
-    // example: did:eth:0x5Ee76017be7F983a520a778B413758A9DB49cBe9, did:eth:5Ee76017be7F983a520a778B413758A9DB49cBe9
+    // example: did:etho:5Ee76017be7F983a520a778B413758A9DB49cBe9
     /**
    * @dev verify did format
    * @param did did
    */
     function verifyDIDFormat(string memory did) public pure returns (bool){
         bytes memory didData = bytes(did);
-        if (didData.length < 48) {
+        if (didData.length != 49) {
             return false;
         }
-        bytes memory prefix = bytes("did:eth:");
+        bytes memory prefix = bytes("did:etho:");
         if (!BytesUtils.equal(BytesUtils.slice(didData, 0, prefix.length), prefix)) {
             return false;
         }

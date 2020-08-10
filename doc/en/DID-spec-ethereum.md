@@ -19,16 +19,16 @@ Ethereum DID is generated in conformity with [W3C DIDs specification](https://ww
 The ABNF grammar used to generate the Ethereum DID identifier is as follows:
 
 ```
-eth-did   = "did:eth:" eth-specific-idstring
-eth-specific-idstring = ["0x"] 40*40HEXDIG
+eth-did   = "did:etho:" eth-specific-idstring
+eth-specific-idstring = 40*40HEXDIG
 ```
 
-`did:eth:` denotes that Ethereum DIDs are decentralized identifiers conforming to [W3C DIDs specification](https://www.w3.org/TR/did-core/), and are  registered on the Ethereum blockchain.
+`did:etho:` denotes that Ethereum DIDs are decentralized identifiers conforming to [W3C DIDs specification](https://www.w3.org/TR/did-core/), and are  registered on the Ethereum blockchain.
 
 Below is an example of a Ethereum DID:
 
 ```
-did:eth:0xf269E60fF7280e3E11b7EEd7B76b5C005105D121
+did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121
 ```
 
 ## Ethereum DID Registration and Deactivation
@@ -48,7 +48,7 @@ Below is the basic structure of the Ethereum DID Document:
 ```json
 {
   "@context": ["https://www.w3.org/ns/did/v1"],
-  "id": "did:eth:alice.eth",
+  "id": "did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121",
   "publicKey": [...],
   "authentication": [...],
   "controller": [...],
@@ -82,7 +82,7 @@ The value of `id` **MUST** be a valid Ethereum DID. A Ethereum DID **MUST** have
 
 ```json
 {
-  "id": "did:eth:alice.eth"
+  "id": "did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121"
 }
 ```
 
@@ -110,9 +110,9 @@ Below is a specific example of the `publicKey` property:
 {
   "publicKey": [
 	{
-	  "id": "did:eth:alice.eth#keys-1",
+	  "id": "did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121#keys-1",
 	  "type": "Ed25519VerificationKey2018",
-	  "controller": "did:eth:alice.eth",
+	  "controller": "did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121",
 	  "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
 	}
   ]
@@ -133,11 +133,11 @@ Below is an example which refers to authentication keys in the two way specified
 {
   ...
   "authentication": [
-	"did:eth:alice.eth#keys-1",
+	"did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121#keys-1",
 	{
-	  "id": "did:eth:alice.eth#keys-2",
+	  "id": "did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121#keys-2",
 	  "type": "EcdsaSecp256k1VerificationKey2019",
-	  "controller": "did:eth:alice.eth",
+	  "controller": "did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121",
 	  "publicKeyBaseHex": "03a835599850544b4c0a222d594be5d59cf298f5a3fd90bff1c8caa064523745f3"
 	}
   ],
@@ -156,15 +156,15 @@ It is worth noting that a Ethereum DID Document can assign `controller` without 
 
 The Ethereum DID Document of the delegate **SHOULD** have a `authentication` property.
 
-Below is a specific example representing that either `did:eth:bob.eth` or `did:eth:carl.eth` can act as a delegate of `did:eth:alice.eth`:
+Below is a specific example representing that either `did:etho:5Ee76017be7F983a520a778B413758A9DB49cBe9` or `did:etho:9861eE37Ede3dCab070DF227155D86A7438d8Ed2` can act as a delegate of `did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121`:
 
 ```json
 {
   ...
-  "id": "did:eth:alice.eth",
+  "id": "did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121",
   "controller": [
-	"did:eth:bob.eth",
-	"did:eth:carl.eth"
+	"did:etho:5Ee76017be7F983a520a778B413758A9DB49cBe9",
+	"did:etho:9861eE37Ede3dCab070DF227155D86A7438d8Ed2"
   ],
 }
 ```
@@ -184,7 +184,7 @@ Below is a specific example:
   ...
   "service": [
 	{
-	  "id": "did:eth:alice.eth#some-service",
+	  "id": "did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121#some-service",
 	  "type": "SomeServiceType",
 	  "serviceEndpoint": "Some URL"
 	}
@@ -227,17 +227,17 @@ A simple example of a Ethereum DID Document is as follows:
 ```json
 {
   "@context": ["https://www.w3.org/ns/did/v1", "https://www.eth.org/did/v1"],
-  "id": "did:eth:alice.eth",
+  "id": "did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121",
   "publicKey": [
 	{
-	  "id": "did:eth:alice.eth#keys-1",
+	  "id": "did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121#keys-1",
 	  "type": "EcdsaSecp256r1VerificationKey2019",
-	  "controller": "did:eth:alice.eth",
+	  "controller": "did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121",
 	  "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
 	}
   ],
   "authentication": [
-	"did:eth:alice.eth#keys-1"
+	"did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121#keys-1"
   ]
 }
 ```

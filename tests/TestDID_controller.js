@@ -12,30 +12,30 @@ contract('DID', (accounts) => {
         let didContract = await DIDContract.at(instance.address);
         // register one did
         let hash = keccak256(Date.now().toString());
-        let addr = "0x" + hash.substring(hash.length - 40, hash.length);
-        did = 'did:eth:' + addr;
+        let addr = hash.substring(hash.length - 40, hash.length);
+        did = 'did:etho:' + addr;
         console.log(did);
         let privKey = Buffer.from("515b4666f4329520309a8fc59de7f5af44829c9e5f5d51c281b294999fb3cd60", 'hex');
         pubKey = eth.privateToPublic(privKey);
         console.log(pubKey.toString('hex'));
         let registerTx = await didContract.regIDWithPublicKey(did, pubKey, {from: accounts[0]});
-        // 2 event are add context, 1 event is register
-        assert.equal(3, registerTx.logs.length);
-        let registerEvent = registerTx.logs[2];
+        // 1 event are add context, 1 event is register
+        assert.equal(2, registerTx.logs.length);
+        let registerEvent = registerTx.logs[1];
         assert.equal("Register", registerEvent.event);
         assert.equal(did, registerEvent.args.did);
         // use accounts[1] public key to register another did as controller
         hash = keccak256(Date.now().toString() + accounts[1]);
-        addr = "0x" + hash.substring(hash.length - 40, hash.length);
-        controller = 'did:eth:' + addr;
+        addr = hash.substring(hash.length - 40, hash.length);
+        controller = 'did:etho:' + addr;
         console.log(controller);
         privKey = Buffer.from("34654b1fb0ee17a235950fc2b8177af4e69730b180efad7b78b772740c2c6ca0", 'hex');
         controllerPubKey = eth.privateToPublic(privKey);
         console.log(controllerPubKey.toString('hex'));
         registerTx = await didContract.regIDWithPublicKey(controller, controllerPubKey, {from: accounts[1]});
-        // 2 event are add context, 1 event is register
-        assert.equal(3, registerTx.logs.length);
-        registerEvent = registerTx.logs[2];
+        // 1 event are add context, 1 event is register
+        assert.equal(2, registerTx.logs.length);
+        registerEvent = registerTx.logs[1];
         assert.equal("Register", registerEvent.event);
         assert.equal(controller, registerEvent.args.did);
         // add controller

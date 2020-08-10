@@ -10,16 +10,16 @@ contract('DID', (accounts) => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
         let hash = keccak256(Date.now().toString());
-        let addr = "0x" + hash.substring(hash.length - 40, hash.length);
-        did = 'did:eth:' + addr;
+        let addr = hash.substring(hash.length - 40, hash.length);
+        did = 'did:etho:' + addr;
         console.log(did);
         let privKey = Buffer.from("515b4666f4329520309a8fc59de7f5af44829c9e5f5d51c281b294999fb3cd60", 'hex');
         pubKey = eth.privateToPublic(privKey);
         console.log(pubKey.toString('hex'));
         let registerTx = await didContract.regIDWithPublicKey(did, pubKey, {from: accounts[0]});
-        // 2 event are add context, 1 event is register
-        assert.equal(3, registerTx.logs.length);
-        let registerEvent = registerTx.logs[2];
+        // 1 event are add context, 1 event is register
+        assert.equal(2, registerTx.logs.length);
+        let registerEvent = registerTx.logs[1];
         assert.equal("Register", registerEvent.event);
         assert.equal(did, registerEvent.args.did);
         let allPubKey = await didContract.getAllPubKey(did);
@@ -39,7 +39,6 @@ contract('DID', (accounts) => {
         anotherPubKey = eth.privateToPublic(privKey);
         console.log(anotherPubKey.toString('hex'));
         let tx = await didContract.addKey(did, anotherPubKey, [did], {from: accounts[0]});
-        // 2 event are add context, 1 event is register
         assert.equal(1, tx.logs.length);
         let addKeyEvt = tx.logs[0];
         assert.equal("AddKey", addKeyEvt.event);
@@ -103,7 +102,7 @@ contract('DID', (accounts) => {
         let addCtxTx = await didContract.addContext(did, ctx);
         let allCtx = await didContract.getContext(did);
         console.log(allCtx);
-        assert.equal(4, allCtx.length);
+        assert.equal(3, allCtx.length);
         assert.equal(2, addCtxTx.logs.length);
         assert.equal("AddContext", addCtxTx.logs[0].event);
         assert.equal("AddContext", addCtxTx.logs[1].event);
@@ -112,7 +111,7 @@ contract('DID', (accounts) => {
         let removeCtxTx = await didContract.removeContext(did, ctx);
         allCtx = await didContract.getContext(did);
         console.log(allCtx);
-        assert.equal(2, allCtx.length);
+        assert.equal(1, allCtx.length);
         assert.equal(2, removeCtxTx.logs.length);
         assert.equal("RemoveContext", removeCtxTx.logs[0].event);
         assert.equal("RemoveContext", removeCtxTx.logs[1].event);

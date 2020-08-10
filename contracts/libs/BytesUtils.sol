@@ -285,11 +285,6 @@ library BytesUtils {
     */
     function fromHex(string memory s) public pure returns (bytes memory) {
         bytes memory ss = bytes(s);
-        if (ss.length > 2) {
-            if (equal(slice(ss, 0, 2), bytes("0x"))) {
-                ss = slice(ss, 2, ss.length - 2);
-            }
-        }
         require(ss.length % 2 == 0);
         // length must be even
         bytes memory r = new bytes(ss.length / 2);
