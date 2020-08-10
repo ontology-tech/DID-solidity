@@ -7,3 +7,4 @@ package.json
 yarn.lock
 .env
 account.dat
+.celo-account-priv

@@ -11,8 +11,15 @@ contract MixinDidStorage {
     using IterableMapping for IterableMapping.itmap;
     mapping(string => IterableMapping.itmap) public data; // data storage
 
-    byte public constant ACTIVATED = "1";
-    byte public constant REVOKED = "0";
+    struct DIDStatus {
+        bool existed;
+
+        bool activated;
+        string version;
+        uint authListLen;
+    }
+
+    mapping(string => DIDStatus) public didStatus;
 
     string public constant PUB_KEY_TYPE = "EcdsaSecp256k1VerificationKey2019";
 }

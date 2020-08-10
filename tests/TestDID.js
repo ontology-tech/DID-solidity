@@ -6,6 +6,9 @@ const DIDContractV2 = artifacts.require("DIDContractV2");
 const BytesUtils = artifacts.require("BytesUtils");
 const DidUtils = artifacts.require("DidUtils");
 const KeyUtils = artifacts.require("KeyUtils");
+const ZeroCopySink = artifacts.require("ZeroCopySink");
+const ZeroCopySource = artifacts.require("ZeroCopySource");
+const StorageUtils = artifacts.require("StorageUtils");
 
 
 contract('DID', (accounts) => {
@@ -22,9 +25,10 @@ contract('DID', (accounts) => {
         pubKey = eth.privateToPublic(privKey);
         console.log(pubKey.toString('hex'));
         let registerTx = await didContract.regIDWithPublicKey(did, pubKey, {from: accounts[0]});
-        // 1 event are add context, 1 event is register
-        assert.equal(2, registerTx.logs.length);
-        let registerEvent = registerTx.logs[1];
+        console.log("register gas: ", registerTx.receipt.gasUsed);
+        // event is register
+        assert.equal(1, registerTx.logs.length);
+        let registerEvent = registerTx.logs[0];
         assert.equal("Register", registerEvent.event);
         assert.equal(did, registerEvent.args.did);
         let allPubKey = await didContract.getAllPubKey(did);
@@ -44,6 +48,7 @@ contract('DID', (accounts) => {
         anotherPubKey = eth.privateToPublic(privKey);
         console.log(anotherPubKey.toString('hex'));
         let tx = await didContract.addKey(did, anotherPubKey, [did], {from: accounts[0]});
+        console.log("addKey gas: ", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         let addKeyEvt = tx.logs[0];
         assert.equal("AddKey", addKeyEvt.event);
@@ -62,6 +67,7 @@ contract('DID', (accounts) => {
         let didContract = await DIDContract.at(instance.address);
         let tx = await didContract.setAuthKey(did, anotherPubKey);
         assert.equal(1, tx.logs.length);
+        console.log("setAuthKey gas: ", tx.receipt.gasUsed);
         let evt = tx.logs[0];
         assert.equal("SetAuthKey", evt.event);
         assert.equal(did, evt.args.did);
@@ -74,11 +80,13 @@ contract('DID', (accounts) => {
         assert.equal(2, allAuthPubKey.length);
         assert.equal('0x' + anotherPubKey.toString('hex').toLowerCase(), allAuthPubKey[1].pubKey);
         assert.ok(allAuthPubKey[1].isAuth);
+        assert.equal(allAuthPubKey[1].authIndex, 2);
     });
     it('deactivate auth key', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
         let tx = await didContract.deactivateAuthKey(did, anotherPubKey);
+        console.log("deactivateAuthKey gas: ", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         let evt = tx.logs[0];
         assert.equal("DeactivateAuthKey", evt.event);
@@ -86,6 +94,9 @@ contract('DID', (accounts) => {
         assert.equal('0x' + anotherPubKey.toString('hex').toLowerCase(), evt.args.pubKey.toLowerCase());
         let allAuthPubKey = await didContract.getAllAuthKey(did);
         assert.equal(1, allAuthPubKey.length);
+        assert.equal(allAuthPubKey[0].authIndex, 1);
+        let allPubKey = await didContract.getAllPubKey(did);
+        assert.equal(2, allPubKey.length);
     });
     it('auth new key', async () => {
         let privKey = Buffer.from("436f5568bf64ccfb273da130d4a04f87f7f86d55fd5eae49da771ad2ea79cc8f", 'hex');
@@ -94,19 +105,25 @@ contract('DID', (accounts) => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
         let tx = await didContract.addNewAuthKey(did, newAuthKey, [did], {from: accounts[0]});
+        console.log("addNewAuthKey gas: ", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         assert.equal("AddNewAuthKey", tx.logs[0].event);
         assert.equal(did, tx.logs[0].args.did);
         assert.equal('0x' + newAuthKey.toString('hex').toLowerCase(), tx.logs[0].args.pubKey.toLowerCase());
-        console.log(tx.logs[0].args.controller);
+        // console.log(tx.logs[0].args.controller);
+        let allAuthPubKey = await didContract.getAllAuthKey(did);
+        assert.equal(allAuthPubKey.length, 2);
+        assert.equal(allAuthPubKey[0].authIndex, 1);
+        assert.equal(allAuthPubKey[1].authIndex, 3);
     });
     it('add and remove context', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
         let ctx = ["context1", "context2"];
         let addCtxTx = await didContract.addContext(did, ctx);
+        console.log("addContext gas: ", addCtxTx.receipt.gasUsed);
         let allCtx = await didContract.getContext(did);
-        console.log(allCtx);
+        // console.log(allCtx);
         assert.equal(3, allCtx.length);
         assert.equal(2, addCtxTx.logs.length);
         assert.equal("AddContext", addCtxTx.logs[0].event);
@@ -114,8 +131,9 @@ contract('DID', (accounts) => {
         assert.equal(ctx[0], addCtxTx.logs[0].args.context);
         assert.equal(ctx[1], addCtxTx.logs[1].args.context);
         let removeCtxTx = await didContract.removeContext(did, ctx);
+        console.log("removeContext gas: ", removeCtxTx.receipt.gasUsed);
         allCtx = await didContract.getContext(did);
-        console.log(allCtx);
+        // console.log(allCtx);
         assert.equal(1, allCtx.length);
         assert.equal(2, removeCtxTx.logs.length);
         assert.equal("RemoveContext", removeCtxTx.logs[0].event);
@@ -130,6 +148,7 @@ contract('DID', (accounts) => {
         let service2 = {serviceId: "444", serviceType: "555", serviceEndpoint: "666"};
         let addServTx1 = await didContract.addService(did, service1.serviceId, service1.serviceType,
             service1.serviceEndpoint);
+        console.log("addService gas: ", addServTx1.receipt.gasUsed);
         let addServTx2 = await didContract.addService(did, service2.serviceId, service2.serviceType,
             service2.serviceEndpoint);
         assert.equal(1, addServTx1.logs.length);
@@ -140,9 +159,10 @@ contract('DID', (accounts) => {
         assert.equal(service2.serviceId, addServTx2.logs[0].args.serviceId);
         let allServ = await didContract.getAllService(did);
         assert.equal(2, allServ.length);
-        console.log(allServ);
+        // console.log(allServ);
         let updateServTx = await didContract.updateService(did, service1.serviceId, service2.serviceType,
             service2.serviceEndpoint);
+        console.log("updateService gas: ", updateServTx.receipt.gasUsed);
         assert.equal(1, updateServTx.logs.length);
         let updateEvt = updateServTx.logs[0];
         assert.equal(service1.serviceId, updateEvt.args.serviceId);
@@ -150,8 +170,9 @@ contract('DID', (accounts) => {
         assert.equal(service2.serviceEndpoint, updateEvt.args.serviceEndpoint);
         allServ = await didContract.getAllService(did);
         assert.equal(2, allServ.length);
-        console.log(allServ);
+        // console.log(allServ);
         let removeServTx1 = await didContract.removeService(did, service1.serviceId);
+        console.log("removeService gas: ", removeServTx1.receipt.gasUsed);
         assert.equal(1, removeServTx1.logs.length);
         let removeEvt = updateServTx.logs[0];
         assert.equal(service1.serviceId, removeEvt.args.serviceId);
@@ -159,7 +180,7 @@ contract('DID', (accounts) => {
         assert.equal(service2.serviceEndpoint, removeEvt.args.serviceEndpoint);
         allServ = await didContract.getAllService(did);
         assert.equal(1, allServ.length);
-        console.log(allServ);
+        // console.log(allServ);
     })
     it('test verify signature', async () => {
         let instance = await EternalStorageProxy.deployed();
@@ -167,40 +188,25 @@ contract('DID', (accounts) => {
         let verified = await didContract.verifySignature(did);
         assert.ok(verified);
     });
-    it('test deactivate key', async () => {
-        let instance = await EternalStorageProxy.deployed();
-        let didContract = await DIDContract.at(instance.address);
-        let allPubKey = await didContract.getAllPubKey(did);
-        // deactivate key that has no authentication firstlly
-        for (let i = 0; i < allPubKey.length; i++) {
-            let pubKey = allPubKey[i];
-            if (pubKey.isAuth) {
-                continue;
-            }
-            let tx = await didContract.deactivateKey(did, pubKey.pubKey);
-            assert.equal(1, tx.logs.length);
-            console.log(tx.logs[0].did, "deactivate", tx.logs[0].pubKey);
-        }
-        for (let i = 0; i < allPubKey.length; i++) {
-            let pubKey = allPubKey[i];
-            let tx = await didContract.deactivateKey(did, pubKey.pubKey);
-            assert.equal(1, tx.logs.length);
-            console.log(tx.logs[0].did, "deactivate", tx.logs[0].pubKey);
-        }
-    });
     it('test get document', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
         let document = await didContract.getDocument(did);
-        console.log(document);
+        // console.log(document);
     });
     it('test upgrade', async () => {
         let byteUtils = await BytesUtils.deployed();
         let didUtils = await DidUtils.deployed();
         let keyUtils = await KeyUtils.deployed();
+        let zeroCopySource = await ZeroCopySource.deployed();
+        let zeroCopySink = await ZeroCopySink.deployed();
+        let storageUtils = await StorageUtils.deployed();
         await DIDContractV2.link(BytesUtils, byteUtils.address);
         await DIDContractV2.link(DidUtils, didUtils.address);
         await DIDContractV2.link(KeyUtils, keyUtils.address);
+        await DIDContractV2.link(ZeroCopySource, zeroCopySource.address);
+        await DIDContractV2.link(ZeroCopySink, zeroCopySink.address);
+        await DIDContractV2.link(StorageUtils, storageUtils.address);
         let proxy = await EternalStorageProxy.deployed();
         let did = await DIDContractV2.new();
         proxy.upgradeTo("v2.0.0", did.address);
@@ -209,7 +215,7 @@ contract('DID', (accounts) => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContractV2.at(instance.address);
         let document = await didContract.getDocument(did);
-        console.log(document);
+        // console.log(document);
         assert.notEqual(document, undefined);
     });
     it('test we can update document after upgraded', async () => {
@@ -222,13 +228,30 @@ contract('DID', (accounts) => {
         assert.equal("AddService", addServTx1.logs[0].event);
         assert.equal(service1.serviceEndpoint, addServTx1.logs[0].args.serviceEndpoint);
     });
+    it('test deactivate key', async () => {
+        let instance = await EternalStorageProxy.deployed();
+        let didContract = await DIDContract.at(instance.address);
+        let allPubKey = await didContract.getAllPubKey(did);
+        for (let i = 0; i < allPubKey.length; i++) {
+            let pubKey = allPubKey[i];
+            let tx = await didContract.deactivateKey(did, pubKey.pubKey, {from: accounts[2]});
+            assert.equal(1, tx.logs.length);
+            // console.log(tx.logs[0].did, "deactivate", tx.logs[0].pubKey);
+            console.log("deactivateKey gas: ", tx.receipt.gasUsed);
+        }
+        allPubKey = await didContract.getAllPubKey(did);
+        assert.equal(0, allPubKey.length);
+        let allAuthPubKey = await didContract.getAllAuthKey(did);
+        assert.equal(allAuthPubKey.length, 1);
+    });
     it('deactivate did', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContractV2.at(instance.address);
-        let tx = await didContract.deactivateID(did);
+        let tx = await didContract.deactivateID(did, {from: accounts[2]});
         assert.equal(1, tx.logs.length);
         assert.equal("Deactivate", tx.logs[0].event);
         assert.equal(did, tx.logs[0].args.did);
+        console.log("deactivateID gas: ", tx.receipt.gasUsed);
         // re-register will failed
         // tx = await didContract.regWithPubKey(did, pubKey);
     });

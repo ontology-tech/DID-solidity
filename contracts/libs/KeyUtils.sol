@@ -6,18 +6,9 @@ import "./BytesUtils.sol";
 
 library KeyUtils {
 
-    // status represent DID activated("1") or revoked("0")
-    function genStatusKey(string memory did) public pure returns (string memory){
-        return string(abi.encodePacked(BytesUtils.toLower(did), bytes("status")));
-    }
-
-    function genStatusSecondKey() public pure returns (bytes32){
-        // return keccak256("status");
-        return 0xcd423760c9650eb549b1615f6cf96d420e32aadcea2ff5fe11c26457244adcc1;
-    }
-
     function genContextKey(string memory did) public pure returns (string memory){
-        return string(abi.encodePacked(BytesUtils.toLower(did), "@context"));
+        did = BytesUtils.toLower(did);
+        return string(abi.encodePacked(did, "@context"));
     }
 
     function genContextSecondKey(string memory ctx) public pure returns (bytes32){
@@ -25,27 +16,17 @@ library KeyUtils {
     }
 
     function genPubKeyListKey(string memory did) public pure returns (string memory){
-        return string(abi.encodePacked(BytesUtils.toLower(did), "publicKey"));
+        did = BytesUtils.toLower(did);
+        return string(abi.encodePacked(did, "publicKey"));
     }
 
     function genPubKeyListSecondKey(bytes memory pubKey) public pure returns (bytes32){
         return keccak256(pubKey);
     }
 
-    function genAuthOrderKey(string memory did) public pure returns (string memory){
-        return string(abi.encodePacked(BytesUtils.toLower(did), "authOrder"));
-    }
-
-    /**
-    * @dev auth order store authentication key order, hash(pubKey) => pubKey,
-    *   because authentication list must be orderly, so there is a field to record this order
-    */
-    function genAuthOrderSecondKey(bytes memory pubKey) public pure returns (bytes32){
-        return keccak256(pubKey);
-    }
-
     function genControllerKey(string memory did) public pure returns (string memory) {
-        return string(abi.encodePacked(BytesUtils.toLower(did), "controller"));
+        did = BytesUtils.toLower(did);
+        return string(abi.encodePacked(did, "controller"));
     }
 
     function genControllerSecondKey(string memory controller) public pure returns (bytes32){
@@ -53,7 +34,8 @@ library KeyUtils {
     }
 
     function genServiceKey(string memory did) public pure returns (string memory) {
-        return string(abi.encodePacked(BytesUtils.toLower(did), "service"));
+        did = BytesUtils.toLower(did);
+        return string(abi.encodePacked(did, "service"));
     }
 
     function genServiceSecondKey(string memory serviceId) public pure returns (bytes32) {
@@ -61,7 +43,8 @@ library KeyUtils {
     }
 
     function genCreateTimeKey(string memory did) public pure returns (string memory) {
-        return string(abi.encodePacked(BytesUtils.toLower(did), "createTime"));
+        did = BytesUtils.toLower(did);
+        return string(abi.encodePacked(did, "createTime"));
     }
 
     function genCreateTimeSecondKey() public pure returns (bytes32) {
@@ -70,7 +53,8 @@ library KeyUtils {
     }
 
     function genUpdateTimeKey(string memory did) public pure returns (string memory) {
-        return string(abi.encodePacked(BytesUtils.toLower(did), "updateTime"));
+        did = BytesUtils.toLower(did);
+        return string(abi.encodePacked(did, "updateTime"));
     }
 
     function genUpdateTimeSecondKey() public pure returns (bytes32) {

@@ -24,5 +24,28 @@ We offer versions in two language:
 
 ### Ropsten
 
-EternalStorageProxy: 0x8bB3f5651249D10FEeE801De905e4f50E22D4871
-DIDContract: 0x0E9D92CEA0B3359cBCB66F61c4Ca7D7b8ad74642
+EternalStorageProxy: 0x9fF365Eb96B2E1E6F968947F56275D2bBe50F06e
+DIDContract: 0x55DE116e54220a243d2e77cEaC78B5F2B3F7f73c
+
+## Gas Consumed
+
+>Note: It's just an estimate because it comes from unit test.
+
+| name | gas |
+| --- | --- |
+| regIDWithPublicKey |  609393 |
+| addKey |  588628 |
+| setAuthKey |  306040 |
+| deactivateAuthKey |  286482 |
+| addNewAuthKey |  524172 |
+| addContext |  392427 |
+| removeContext |  222770 |
+| addService |  330940 |
+| updateService |  234917 |
+| removeService |  223965 |
+| deactivateKey |  315875 |
+| deactivateID |  213743 |
+| addController |  417299 |
+| addNewAuthKeyByController |  571270 |
+| setAuthKeyByController |  277645 |
+| deactivateAuthKeyByController |  256172 |

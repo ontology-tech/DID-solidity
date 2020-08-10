@@ -19,9 +19,9 @@ contract('DID', (accounts) => {
         pubKey = eth.privateToPublic(privKey);
         console.log(pubKey.toString('hex'));
         let registerTx = await didContract.regIDWithPublicKey(did, pubKey, {from: accounts[0]});
-        // 1 event are add context, 1 event is register
-        assert.equal(2, registerTx.logs.length);
-        let registerEvent = registerTx.logs[1];
+        // event is register
+        assert.equal(1, registerTx.logs.length);
+        let registerEvent = registerTx.logs[0];
         assert.equal("Register", registerEvent.event);
         assert.equal(did, registerEvent.args.did);
         // use accounts[1] public key to register another did as controller
@@ -33,13 +33,14 @@ contract('DID', (accounts) => {
         controllerPubKey = eth.privateToPublic(privKey);
         console.log(controllerPubKey.toString('hex'));
         registerTx = await didContract.regIDWithPublicKey(controller, controllerPubKey, {from: accounts[1]});
-        // 1 event are add context, 1 event is register
-        assert.equal(2, registerTx.logs.length);
-        registerEvent = registerTx.logs[1];
+        // event is register
+        assert.equal(1, registerTx.logs.length);
+        registerEvent = registerTx.logs[0];
         assert.equal("Register", registerEvent.event);
         assert.equal(controller, registerEvent.args.did);
         // add controller
         let addControllerTx = await didContract.addController(did, controller);
+        console.log("addController gas: ", addControllerTx.receipt.gasUsed);
         assert.equal(1, addControllerTx.logs.length);
         assert.equal("AddController", addControllerTx.logs[0].event);
         assert.equal(did, addControllerTx.logs[0].args.did);
@@ -55,12 +56,13 @@ contract('DID', (accounts) => {
         // use controller to sign tx
         let tx = await didContract.addNewAuthKeyByController(did, newAuthKey, newAuthKeyController,
             controller, {from: accounts[1]});
+        console.log("addNewAuthKeyByController gas: ", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         let evt = tx.logs[0];
         assert.equal('AddNewAuthKey', evt.event);
         assert.equal(did, evt.args.did);
         assert.equal('0x' + newAuthKey.toString('hex').toLowerCase(), evt.args.pubKey);
-        console.log(evt.args.controller);
+        // console.log(evt.args.controller);
         let allPubKey = await didContract.getAllPubKey(did);
         assert.equal(1, allPubKey.length);
         let allAuthPubKey = await didContract.getAllAuthKey(did);
@@ -76,10 +78,11 @@ contract('DID', (accounts) => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
         let addKeyTx = await didContract.addKey(did, anotherKey, [did], {from: accounts[0]});
-        console.log(addKeyTx.logs);
+        // console.log(addKeyTx.logs);
         // set auth by controller
         let setAuthKeyTx = await didContract.setAuthKeyByController(did, anotherKey, controller,
             {from: accounts[1]});
+        console.log("setAuthKeyByController gas: ", setAuthKeyTx.receipt.gasUsed);
         assert.equal(1, setAuthKeyTx.logs.length);
         let evt = setAuthKeyTx.logs[0];
         assert.equal("SetAuthKey", evt.event);
@@ -96,16 +99,17 @@ contract('DID', (accounts) => {
         let didContract = await DIDContract.at(instance.address);
         let tx = await didContract.deactivateAuthKeyByController(did, pubKey, controller,
             {from: accounts[1]});
+        console.log("deactivateAuthKeyByController gas: ", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         let evt = tx.logs[0];
         assert.equal("DeactivateAuthKey", evt.event);
-        console.log(evt);
+        // console.log(evt);
         let allPubKey = await didContract.getAllPubKey(did);
         assert.equal(2, allPubKey.length);
-        console.log(allPubKey);
+        // console.log(allPubKey);
         let allAuthPubKey = await didContract.getAllAuthKey(did);
         assert.equal(2, allAuthPubKey.length);
-        console.log(allAuthPubKey);
+        // console.log(allAuthPubKey);
     });
     it('verify controller', async () => {
         let instance = await EternalStorageProxy.deployed();

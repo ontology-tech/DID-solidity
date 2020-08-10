@@ -327,9 +327,10 @@ library BytesUtils {
         bytes memory bLower = new bytes(bStr.length);
         for (uint i = 0; i < bStr.length; i++) {
             // Uppercase character...
-            if ((uint8(bStr[i]) >= 65) && (uint8(bStr[i]) <= 90)) {
+            uint8 c = uint8(bStr[i]);
+            if ((c >= 65) && ( c <= 90)) {
                 // So we add 32 to make it lowercase
-                bLower[i] = bytes1(uint8(bStr[i]) + 32);
+                bLower[i] = bytes1(c + 32);
             } else {
                 bLower[i] = bStr[i];
             }
