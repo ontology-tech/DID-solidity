@@ -496,7 +496,7 @@ contract DIDContract is MixinDidStorage, IDid {
    */
     function updateTime(string memory did) private {
         string memory updateTimeKey = KeyUtils.genUpdateTimeKey(did);
-        bytes32 key = KeyUtils.genCreateTimeSecondKey();
+        bytes32 key = KeyUtils.genUpdateTimeSecondKey();
         data[updateTimeKey].insert(key, abi.encode(now));
     }
 
@@ -674,7 +674,7 @@ contract DIDContract is MixinDidStorage, IDid {
    */
     function getUpdatedTime(string memory did) verifyDIDFormat(did) public view returns (uint){
         string memory updateTimekey = KeyUtils.genUpdateTimeKey(did);
-        bytes32 key = KeyUtils.genCreateTimeSecondKey();
+        bytes32 key = KeyUtils.genUpdateTimeSecondKey();
         bytes memory time = data[updateTimekey].data[key].value;
         return abi.decode(time, (uint));
     }

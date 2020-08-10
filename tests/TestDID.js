@@ -2,6 +2,11 @@ const eth = require('ethereumjs-util');
 const EternalStorageProxy = artifacts.require("EternalStorageProxy");
 const DIDContract = artifacts.require("DIDContract");
 const keccak256 = require('js-sha3').keccak256;
+const DIDContractV2 = artifacts.require("DIDContractV2");
+const BytesUtils = artifacts.require("BytesUtils");
+const DidUtils = artifacts.require("DidUtils");
+const KeyUtils = artifacts.require("KeyUtils");
+
 
 contract('DID', (accounts) => {
     // generate different did at every test
@@ -189,9 +194,37 @@ contract('DID', (accounts) => {
         let document = await didContract.getDocument(did);
         console.log(document);
     });
+    it('test upgrade', async () => {
+        let byteUtils = await BytesUtils.deployed();
+        let didUtils = await DidUtils.deployed();
+        let keyUtils = await KeyUtils.deployed();
+        await DIDContractV2.link(BytesUtils, byteUtils.address);
+        await DIDContractV2.link(DidUtils, didUtils.address);
+        await DIDContractV2.link(KeyUtils, keyUtils.address);
+        let proxy = await EternalStorageProxy.deployed();
+        let did = await DIDContractV2.new();
+        proxy.upgradeTo("v2.0.0", did.address);
+    });
+    it('test data existed after upgraded', async () => {
+        let instance = await EternalStorageProxy.deployed();
+        let didContract = await DIDContractV2.at(instance.address);
+        let document = await didContract.getDocument(did);
+        console.log(document);
+        assert.notEqual(document, undefined);
+    });
+    it('test we can update document after upgraded', async () => {
+        let instance = await EternalStorageProxy.deployed();
+        let didContract = await DIDContractV2.at(instance.address);
+        let service1 = {serviceId: "ddd", serviceType: "sss", serviceEndpoint: "aaa"};
+        let addServTx1 = await didContract.addService(did, service1.serviceId, service1.serviceType,
+            service1.serviceEndpoint);
+        assert.equal(1, addServTx1.logs.length);
+        assert.equal("AddService", addServTx1.logs[0].event);
+        assert.equal(service1.serviceEndpoint, addServTx1.logs[0].args.serviceEndpoint);
+    });
     it('deactivate did', async () => {
         let instance = await EternalStorageProxy.deployed();
-        let didContract = await DIDContract.at(instance.address);
+        let didContract = await DIDContractV2.at(instance.address);
         let tx = await didContract.deactivateID(did);
         assert.equal(1, tx.logs.length);
         assert.equal("Deactivate", tx.logs[0].event);
