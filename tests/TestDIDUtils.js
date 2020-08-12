@@ -14,6 +14,12 @@ contract('DidUtils', (accounts) => {
         assert.equal(r3, false);
         assert.equal(r4, false);
     })
+    it('test parse addr from id', async () => {
+        let did = "did:etho:" + accounts[0].slice(2);
+        let didUtils = await DidUtils.deployed();
+        let addr = await didUtils.parseAddrFromDID(new Buffer(did, 'binary'));
+        assert.equal(addr.toLowerCase(), accounts[0].toLowerCase());
+    });
     it('pub key to address', async () => {
         let didUtils = await DidUtils.deployed();
         let buffer = Buffer.from("436f5568bf64ccfb273da130d4a04f87f7f86d55fd5eae49da771ad2ea79cc8f", 'hex');

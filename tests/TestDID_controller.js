@@ -17,7 +17,7 @@ contract('DID', (accounts) => {
         console.log("addController gas: ", addControllerTx.receipt.gasUsed);
         assert.equal(1, addControllerTx.logs.length);
         assert.equal("AddController", addControllerTx.logs[0].event);
-        assert.equal(did, addControllerTx.logs[0].args.did);
+        assert.equal(did.toLowerCase(), addControllerTx.logs[0].args.did.toLowerCase());
         assert.equal(controller, addControllerTx.logs[0].args.controller);
     });
     let privKey = Buffer.from("436f5568bf64ccfb273da130d4a04f87f7f86d55fd5eae49da771ad2ea79cc8f", 'hex');

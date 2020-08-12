@@ -3,38 +3,31 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "../interface/IDid.sol";
-import "./MixinDidStorage.sol";
 import "../libs/DidUtils.sol";
-import "../libs/KeyUtils.sol";
 import "../libs/BytesUtils.sol";
-import "../libs/ZeroCopySink.sol";
-import "../libs/ZeroCopySource.sol";
 import "../libs/StorageUtils.sol";
 
 /**
  * @title DIDContract
  * @dev This contract is did logic implementation
  */
-contract DIDContract is MixinDidStorage, IDid {
+contract DIDContract is IDid {
+    mapping(string => StorageUtils.DIDDocument) public data; // data storage
+
+    // did => deactivated
+    mapping(string => bool) public deactivatedDID;
+
+    // did => authentication list index
+    mapping(string => uint) public authListIndex;
 
     modifier didActivated(string memory did){
-        require(!didStatus[BytesUtils.toLower(did)].deactivated, "did is deactivated");
+        require(!deactivatedDID[BytesUtils.toLower(did)], "did is deactivated");
         _;
     }
 
     modifier notSelfAddr(string memory did, address addr){
         address didAddr = DidUtils.parseAddrFromDID(bytes(did));
         require(didAddr != addr, "no need to add self addr");
-        _;
-    }
-
-    /**
-    * @dev require msg.sender pass his public key while invoke,
-    *      it means contract cannot invoke the function that modified by verifyPubKeySignature
-    */
-    modifier verifyPubKeySignature(bytes memory pubKey){
-        require(DidUtils.pubKeyToAddr(pubKey) == msg.sender,
-            "verify pub key failed");
         _;
     }
 
@@ -63,31 +56,13 @@ contract DIDContract is MixinDidStorage, IDid {
     * it means public key of msg.sender must be one of did authentication
     */
     modifier requireDIDSign(string memory did) {
-        require(verifyDIDSignature(did), "verify did signature failed");
+        require(verifySignature(did), "verify did signature failed");
         _;
     }
 
     modifier requireDIDControllerSign(string memory did, string memory controller){
         require(verifyController(did, controller), "verify did controller signature failed");
         _;
-    }
-
-    /**
-   * @dev verify there is one did authentication key sign this transaction
-   * @param did did
-   */
-    function verifyDIDSignature(string memory did) private view returns (bool) {
-        StorageUtils.PublicKey[] memory allAuthKey = getAllAuthKey(did);
-        for (uint i = 0; i < allAuthKey.length; i++) {
-            if (allAuthKey[i].ethAddr == msg.sender) {
-                return true;
-            }
-            if (allAuthKey[i].pubKey.length > 0 &&
-                DidUtils.pubKeyToAddr(allAuthKey[i].pubKey) == msg.sender) {
-                return true;
-            }
-        }
-        return false;
     }
 
     constructor() public {
@@ -102,20 +77,12 @@ contract DIDContract is MixinDidStorage, IDid {
     function deactivateID(string memory did)
     requireDIDSign(did) didActivated(did)
     override public {
-        // delete context
-        delete data[KeyUtils.genContextKey(did)];
-        // delete public key list
-        delete data[KeyUtils.genPubKeyListKey(did)];
-        // delete controller
-        delete data[KeyUtils.genControllerKey(did)];
-        // delete service
-        delete data[KeyUtils.genServiceKey(did)];
-        // delete update time
-        delete data[KeyUtils.genUpdateTimeKey(did)];
-        // update status
         did = BytesUtils.toLower(did);
-        didStatus[did].deactivated = true;
-        didStatus[did].authListLen = 0;
+        delete data[did];
+        // delete context
+        deactivatedDID[did] = true;
+        // delete authListIndex
+        delete authListIndex[did];
         emit Deactivate(did);
     }
 
@@ -128,7 +95,7 @@ contract DIDContract is MixinDidStorage, IDid {
     function addKey(string memory did, bytes memory newPubKey, string[] memory controller)
     requireDIDSign(did) verifyMultiDIDFormat(controller)
     override public {
-        addNewPubKey(did, newPubKey, address(0), "EcdsaSecp256k1VerificationKey2019", controller, true, 0);
+        addNewPubKey(did, newPubKey, address(0), StorageUtils.KEY_TYPE_PUB, controller, true, 0);
         emit AddKey(did, newPubKey, controller);
     }
 
@@ -142,7 +109,7 @@ contract DIDContract is MixinDidStorage, IDid {
     requireDIDSign(did) verifyMultiDIDFormat(controller) notSelfAddr(did, addr)
     override public {
         bytes memory emptyPubKey = new bytes(0);
-        addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller, true, 0);
+        addNewPubKey(did, emptyPubKey, addr, StorageUtils.KEY_TYPE_ADDR, controller, true, 0);
         emit AddAddr(did, addr, controller);
     }
 
@@ -155,7 +122,7 @@ contract DIDContract is MixinDidStorage, IDid {
     function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller)
     requireDIDSign(did) verifyMultiDIDFormat(controller)
     override public {
-        addNewPubKey(did, pubKey, address(0), "EcdsaSecp256k1VerificationKey2019", controller,
+        addNewPubKey(did, pubKey, address(0), StorageUtils.KEY_TYPE_PUB, controller,
             false, fetchAuthIndex(did));
         emit AddNewAuthKey(did, pubKey, controller);
     }
@@ -171,7 +138,7 @@ contract DIDContract is MixinDidStorage, IDid {
     override public {
         bytes memory emptyPubKey = new bytes(0);
         uint authIndex = fetchAuthIndex(did);
-        addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller, false, authIndex);
+        addNewPubKey(did, emptyPubKey, addr, StorageUtils.KEY_TYPE_ADDR, controller, false, authIndex);
         emit AddNewAuthAddr(did, addr, controller);
     }
 
@@ -186,7 +153,7 @@ contract DIDContract is MixinDidStorage, IDid {
         string memory controllerSigner)
     requireDIDControllerSign(did, controllerSigner) verifyMultiDIDFormat(controller)
     override public {
-        addNewPubKey(did, pubKey, address(0), "EcdsaSecp256k1VerificationKey2019", controller,
+        addNewPubKey(did, pubKey, address(0), StorageUtils.KEY_TYPE_PUB, controller,
             false, fetchAuthIndex(did));
         emit AddNewAuthKey(did, pubKey, controller);
     }
@@ -204,7 +171,7 @@ contract DIDContract is MixinDidStorage, IDid {
     override public {
         bytes memory emptyPubKey = new bytes(0);
         uint authIndex = fetchAuthIndex(did);
-        addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller,
+        addNewPubKey(did, emptyPubKey, addr, StorageUtils.KEY_TYPE_ADDR, controller,
             false, authIndex);
         emit AddNewAuthAddr(did, addr, controller);
     }
@@ -212,17 +179,9 @@ contract DIDContract is MixinDidStorage, IDid {
     function addNewPubKey(string memory did, bytes memory pubKey, address addr, string memory keyType,
         string[] memory controller, bool isPub, uint authIndex)
     private {
-        require(controller.length >= 1);
-        string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-        uint keyIndex = data[pubKeyListKey].keys.length + 2;
-        string memory pubKeyId = string(abi.encodePacked(did, "#keys-", BytesUtils.uint2str(keyIndex)));
-        StorageUtils.PublicKey memory pub = StorageUtils.PublicKey(pubKeyId, keyType, controller, pubKey,
-            addr, false, isPub, authIndex > 0, authIndex);
-        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pub.pubKey, pub.ethAddr);
-        bytes memory encodedPubKey = StorageUtils.serializePubKey(pub);
-        bool replaced = data[pubKeyListKey].insert(pubKeyListSecondKey, encodedPubKey);
-        require(!replaced, "key already existed");
-        updateTime(did);
+        did = BytesUtils.toLower(did);
+        StorageUtils.DIDDocument storage document = data[did];
+        StorageUtils.addNewPubKey(document, did, pubKey, addr, keyType, controller, isPub, authIndex);
     }
 
     /**
@@ -278,25 +237,16 @@ contract DIDContract is MixinDidStorage, IDid {
     }
 
     function authPubKey(string memory did, bytes memory pubKey, address addr) private {
-        string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey, addr);
-        bytes memory pubKeyData = data[pubKeyListKey].data[pubKeyListSecondKey].value;
-        require(pubKeyData.length > 0, "key is not existed");
-        StorageUtils.PublicKey memory key = StorageUtils.deserializePubKey(pubKeyData);
-        require(!key.deactivated, "key is deactivated");
-        require(!key.isAuth, "key is authenticated");
-        key.isAuth = true;
-        key.authIndex = fetchAuthIndex(did);
-        bytes memory encodedPubKey = StorageUtils.serializePubKey(key);
-        data[pubKeyListKey].insert(pubKeyListSecondKey, encodedPubKey);
-        updateTime(did);
+        did = BytesUtils.toLower(did);
+        StorageUtils.DIDDocument storage document = data[did];
+        StorageUtils.authPubKey(document, pubKey, addr, fetchAuthIndex(did));
     }
 
     function fetchAuthIndex(string memory did) private returns (uint){
         did = BytesUtils.toLower(did);
-        uint authIndex = didStatus[did].authListLen + 2;
+        uint authIndex = authListIndex[did] + 2;
         // this means each auth key index increased 2 every time
-        didStatus[did].authListLen = authIndex;
+        authListIndex[did] = authIndex;
         return authIndex;
     }
 
@@ -327,19 +277,9 @@ contract DIDContract is MixinDidStorage, IDid {
 
     function deactivatePubKey(string memory did, bytes memory pubKey, address addr)
     private {
-        string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey, addr);
-        bytes memory pubKeyData = data[pubKeyListKey].data[pubKeyListSecondKey].value;
-        require(pubKeyData.length > 0, "key is not existed");
-        StorageUtils.PublicKey memory key = StorageUtils.deserializePubKey(pubKeyData);
-        require(!key.deactivated, "key is deactivated");
-        key.isPubKey = false;
-        key.isAuth = false;
-        key.deactivated = true;
-        key.authIndex = 0;
-        bytes memory encodedPubKey = StorageUtils.serializePubKey(key);
-        data[pubKeyListKey].insert(pubKeyListSecondKey, encodedPubKey);
-        updateTime(did);
+        did = BytesUtils.toLower(did);
+        StorageUtils.DIDDocument storage document = data[did];
+        StorageUtils.deactivatePubKey(document, pubKey, addr);
     }
 
     /**
@@ -400,18 +340,9 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param pubKey public key
    */
     function deAuthPubKey(string memory did, bytes memory pubKey, address addr) private {
-        string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey, addr);
-        bytes memory pubKeyData = data[pubKeyListKey].data[pubKeyListSecondKey].value;
-        require(pubKeyData.length > 0, "key is not existed");
-        StorageUtils.PublicKey memory key = StorageUtils.deserializePubKey(pubKeyData);
-        require(!key.deactivated, "key is deactivated");
-        require(key.isAuth, "key has already not authenticated");
-        key.isAuth = false;
-        key.authIndex = 0;
-        bytes memory encodedPubKey = StorageUtils.serializePubKey(key);
-        data[pubKeyListKey].insert(pubKeyListSecondKey, encodedPubKey);
-        updateTime(did);
+        did = BytesUtils.toLower(did);
+        StorageUtils.DIDDocument storage document = data[did];
+        StorageUtils.deAuthPubKey(document, pubKey, addr);
     }
 
     /**
@@ -422,16 +353,14 @@ contract DIDContract is MixinDidStorage, IDid {
     function addContext(string memory did, string[] memory contexts)
     requireDIDSign(did)
     override public {
-        string memory ctxKey = KeyUtils.genContextKey(did);
+        did = BytesUtils.toLower(did);
+        StorageUtils.DIDDocument storage document = data[did];
         for (uint i = 0; i < contexts.length; i++) {
-            string memory ctx = contexts[i];
-            bytes32 key = KeyUtils.genContextSecondKey(ctx);
-            bool replaced = data[ctxKey].insert(key, bytes(ctx));
-            if (!replaced) {
-                emit AddContext(did, ctx);
+            if (StorageUtils.addContext(document, contexts[i])) {
+                emit AddContext(did, contexts[i]);
             }
         }
-        updateTime(did);
+        document.updated = now;
     }
 
     /**
@@ -442,16 +371,14 @@ contract DIDContract is MixinDidStorage, IDid {
     function removeContext(string memory did, string[] memory contexts)
     requireDIDSign(did)
     override public {
-        string memory ctxKey = KeyUtils.genContextKey(did);
+        did = BytesUtils.toLower(did);
+        StorageUtils.DIDDocument storage document = data[did];
         for (uint i = 0; i < contexts.length; i++) {
-            string memory ctx = contexts[i];
-            bytes32 key = KeyUtils.genContextSecondKey(ctx);
-            bool success = data[ctxKey].remove(key);
-            if (success) {
-                emit RemoveContext(did, ctx);
+            if (StorageUtils.removeContext(document, contexts[i])) {
+                emit RemoveContext(did, contexts[i]);
             }
         }
-        updateTime(did);
+        document.updated = now;
     }
 
     /**
@@ -462,11 +389,10 @@ contract DIDContract is MixinDidStorage, IDid {
     function addController(string memory did, string memory controller)
     requireDIDSign(did)
     override public {
-        string memory controllerKey = KeyUtils.genControllerKey(did);
-        bytes32 key = KeyUtils.genControllerSecondKey(controller);
-        bool replaced = data[controllerKey].insert(key, bytes(controller));
-        require(!replaced, "controller already existed");
-        updateTime(did);
+        did = BytesUtils.toLower(did);
+        StorageUtils.DIDDocument storage document = data[did];
+        StorageUtils.addController(document, controller);
+        document.updated = now;
         emit AddController(did, controller);
     }
 
@@ -478,11 +404,9 @@ contract DIDContract is MixinDidStorage, IDid {
     function removeController(string memory did, string memory controller)
     requireDIDSign(did)
     override public {
-        string memory controllerKey = KeyUtils.genControllerKey(did);
-        bytes32 key = KeyUtils.genControllerSecondKey(controller);
-        bool success = data[controllerKey].remove(key);
-        require(success, "controller not existed");
-        updateTime(did);
+        did = BytesUtils.toLower(did);
+        StorageUtils.DIDDocument storage document = data[did];
+        StorageUtils.removeController(document, controller);
         emit RemoveController(did, controller);
     }
 
@@ -497,13 +421,10 @@ contract DIDContract is MixinDidStorage, IDid {
         string memory serviceEndpoint)
     requireDIDSign(did)
     override public {
-        string memory serviceKey = KeyUtils.genServiceKey(did);
-        bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
-        StorageUtils.Service memory service = StorageUtils.Service(serviceId, serviceType, serviceEndpoint);
-        bytes memory serviceBytes = StorageUtils.serializeService(service);
-        bool replaced = data[serviceKey].insert(key, serviceBytes);
-        require(!replaced, "service already existed");
-        updateTime(did);
+        did = BytesUtils.toLower(did);
+        StorageUtils.DIDDocument storage document = data[did];
+        StorageUtils.addService(document, serviceId, serviceType, serviceEndpoint);
+        document.updated = now;
         emit AddService(did, serviceId, serviceType, serviceEndpoint);
     }
 
@@ -518,13 +439,9 @@ contract DIDContract is MixinDidStorage, IDid {
         string memory serviceEndpoint)
     requireDIDSign(did)
     override public {
-        string memory serviceKey = KeyUtils.genServiceKey(did);
-        bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
-        StorageUtils.Service memory service = StorageUtils.Service(serviceId, serviceType, serviceEndpoint);
-        bytes memory serviceBytes = StorageUtils.serializeService(service);
-        bool replaced = data[serviceKey].insert(key, serviceBytes);
-        require(replaced, "service not existed");
-        updateTime(did);
+        did = BytesUtils.toLower(did);
+        StorageUtils.DIDDocument storage document = data[did];
+        StorageUtils.updateService(document, serviceId, serviceType, serviceEndpoint);
         emit UpdateService(did, serviceId, serviceType, serviceEndpoint);
     }
 
@@ -536,22 +453,10 @@ contract DIDContract is MixinDidStorage, IDid {
     function removeService(string memory did, string memory serviceId)
     requireDIDSign(did)
     override public {
-        string memory serviceKey = KeyUtils.genServiceKey(did);
-        bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
-        bool success = data[serviceKey].remove(key);
-        require(success, "service not existed");
-        updateTime(did);
+        did = BytesUtils.toLower(did);
+        StorageUtils.DIDDocument storage document = data[did];
+        StorageUtils.removeService(document, serviceId);
         emit RemoveService(did, serviceId);
-    }
-
-    /**
-   * @dev record did updated time
-   * @param did did
-   */
-    function updateTime(string memory did) private {
-        string memory updateTimeKey = KeyUtils.genUpdateTimeKey(did);
-        bytes32 key = KeyUtils.genUpdateTimeSecondKey();
-        data[updateTimeKey].insert(key, ZeroCopySink.WriteUint255(now));
     }
 
     /**
@@ -561,10 +466,22 @@ contract DIDContract is MixinDidStorage, IDid {
     function verifySignature(string memory did)
     public view returns (bool)
     {
-        if (didStatus[BytesUtils.toLower(did)].deactivated) {
+        did = BytesUtils.toLower(did);
+        if (deactivatedDID[did]) {
             return false;
         }
-        return verifyDIDSignature(did);
+        StorageUtils.PublicKey[] memory allAuthKey = StorageUtils.getAllAuthKey(data[did],
+            did, StorageUtils.KEY_TYPE_ADDR);
+        for (uint i = 0; i < allAuthKey.length; i++) {
+            if (allAuthKey[i].ethAddr == msg.sender) {
+                return true;
+            }
+            if (allAuthKey[i].pubKey.length > 0 &&
+                DidUtils.pubKeyToAddr(allAuthKey[i].pubKey) == msg.sender) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -574,15 +491,20 @@ contract DIDContract is MixinDidStorage, IDid {
    */
     function verifyController(string memory did, string memory controller)
     public view returns (bool){
-        if (didStatus[BytesUtils.toLower(did)].deactivated) {
+        did = BytesUtils.toLower(did);
+        if (deactivatedDID[did]) {
             return false;
         }
-        string memory controllerKey = KeyUtils.genControllerKey(did);
-        bytes32 key = KeyUtils.genControllerSecondKey(controller);
-        if (!data[controllerKey].contains(key)) {
-            return false;
+        StorageUtils.DIDDocument storage document = data[did];
+        string[] memory ctrls = document.controller;
+        bool existed = false;
+        for (uint i = 0; i < ctrls.length; i++) {
+            if (BytesUtils.strEqual(controller, ctrls[i])) {
+                existed = true;
+                break;
+            }
         }
-        return verifyDIDSignature(controller);
+        return existed && verifySignature(controller);
     }
 
     /**
@@ -592,9 +514,8 @@ contract DIDContract is MixinDidStorage, IDid {
     function getAllPubKey(string memory did)
     didActivated(did)
     public view returns (StorageUtils.PublicKey[] memory) {
-        string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-        IterableMapping.itmap storage pubKeyList = data[pubKeyListKey];
-        return StorageUtils.getAllPubKey(did, "EcdsaSecp256k1RecoveryMethod2020", pubKeyList);
+        did = BytesUtils.toLower(did);
+        return StorageUtils.getAllPubKey(data[did], did, StorageUtils.KEY_TYPE_ADDR);
     }
 
     /**
@@ -604,8 +525,8 @@ contract DIDContract is MixinDidStorage, IDid {
     function getAllAuthKey(string memory did)
     didActivated(did)
     public view returns (StorageUtils.PublicKey[] memory) {
-        IterableMapping.itmap storage pubKeyList = data[KeyUtils.genPubKeyListKey(did)];
-        return StorageUtils.getAllAuthKey(did, "EcdsaSecp256k1RecoveryMethod2020", pubKeyList);
+        did = BytesUtils.toLower(did);
+        return StorageUtils.getAllAuthKey(data[did], did, StorageUtils.KEY_TYPE_ADDR);
     }
 
     /**
@@ -614,9 +535,13 @@ contract DIDContract is MixinDidStorage, IDid {
    */
     function getContext(string memory did)
     public view returns (string[] memory) {
-        string memory ctxListKey = KeyUtils.genContextKey(did);
-        IterableMapping.itmap storage ctxList = data[ctxListKey];
-        return StorageUtils.getContext(ctxList);
+        did = BytesUtils.toLower(did);
+        string[] memory ctxs = new string[](data[did].context.length + 1);
+        ctxs[0] = StorageUtils.DEFAULT_CONTEXT;
+        for (uint i = 0; i < data[did].context.length; i++) {
+            ctxs[i + 1] = data[did].context[i];
+        }
+        return ctxs;
     }
 
     /**
@@ -625,9 +550,8 @@ contract DIDContract is MixinDidStorage, IDid {
    */
     function getAllController(string memory did)
     public view returns (string[] memory){
-        string memory controllerListKey = KeyUtils.genControllerKey(did);
-        IterableMapping.itmap storage controllerList = data[controllerListKey];
-        return StorageUtils.getAllController(controllerList);
+        did = BytesUtils.toLower(did);
+        return data[did].controller;
     }
 
     /**
@@ -636,9 +560,8 @@ contract DIDContract is MixinDidStorage, IDid {
    */
     function getAllService(string memory did)
     public view returns (StorageUtils.Service[] memory){
-        string memory serviceKey = KeyUtils.genServiceKey(did);
-        IterableMapping.itmap storage serviceList = data[serviceKey];
-        return StorageUtils.getAllService(serviceList);
+        did = BytesUtils.toLower(did);
+        return data[did].service;
     }
 
     /**
@@ -647,14 +570,8 @@ contract DIDContract is MixinDidStorage, IDid {
    */
     function getUpdatedTime(string memory did)
     public view returns (uint){
-        string memory updateTimeKey = KeyUtils.genUpdateTimeKey(did);
-        bytes32 key = KeyUtils.genUpdateTimeSecondKey();
-        bytes memory time = data[updateTimeKey].data[key].value;
-        if (time.length == 0) {
-            return 0;
-        }
-        (uint256 result,) = ZeroCopySource.NextUint255(time, 0);
-        return result;
+        did = BytesUtils.toLower(did);
+        return data[did].updated;
     }
 
     /**

@@ -328,7 +328,7 @@ library BytesUtils {
         for (uint i = 0; i < bStr.length; i++) {
             // Uppercase character...
             uint8 c = uint8(bStr[i]);
-            if ((c >= 65) && ( c <= 90)) {
+            if ((c >= 65) && (c <= 90)) {
                 // So we add 32 to make it lowercase
                 bLower[i] = bytes1(c + 32);
             } else {
@@ -336,5 +336,9 @@ library BytesUtils {
             }
         }
         return string(bLower);
+    }
+
+    function strEqual(string memory str1, string memory str2) public pure returns (bool){
+        return equal((bytes(str1)), bytes(str2));
     }
 }

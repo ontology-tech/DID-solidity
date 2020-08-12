@@ -10,10 +10,7 @@ const StorageUtils = artifacts.require("StorageUtils");
 // no need to run, only for test upgrade feature
 module.exports = async function (depolyer) {
     // await depolyer.link(DidUtils, DIDContractV2);
-    // await depolyer.link(KeyUtils, DIDContractV2);
     // await depolyer.link(BytesUtils, DIDContractV2);
-    // await depolyer.link(ZeroCopySource, DIDContractV2);
-    // await depolyer.link(ZeroCopySink, DIDContractV2);
     // await depolyer.link(StorageUtils, DIDContractV2);
     //
     // await depolyer.deploy(DIDContractV2);
