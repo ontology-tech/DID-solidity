@@ -22,6 +22,12 @@ contract DIDContract is MixinDidStorage, IDid {
         _;
     }
 
+    modifier notSelfAddr(string memory did, address addr){
+        address didAddr = DidUtils.parseAddrFromDID(bytes(did));
+        require(didAddr != addr, "no need to add self addr");
+        _;
+    }
+
     /**
     * @dev require msg.sender pass his public key while invoke,
     *      it means contract cannot invoke the function that modified by verifyPubKeySignature
@@ -133,7 +139,7 @@ contract DIDContract is MixinDidStorage, IDid {
     * @param controller controller of newPubKey, they are some did
     */
     function addAddr(string memory did, address addr, string[] memory controller)
-    requireDIDSign(did) verifyMultiDIDFormat(controller)
+    requireDIDSign(did) verifyMultiDIDFormat(controller) notSelfAddr(did, addr)
     override public {
         bytes memory emptyPubKey = new bytes(0);
         addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller, true, 0);
@@ -161,11 +167,11 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param controller controller of newPubKey, they are some did
    */
     function addNewAuthAddr(string memory did, address addr, string[] memory controller)
-    requireDIDSign(did) verifyMultiDIDFormat(controller)
+    requireDIDSign(did) verifyMultiDIDFormat(controller) notSelfAddr(did, addr)
     override public {
         bytes memory emptyPubKey = new bytes(0);
-        addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller, false,
-            fetchAuthIndex(did));
+        uint authIndex = fetchAuthIndex(did);
+        addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller, false, authIndex);
         emit AddNewAuthAddr(did, addr, controller);
     }
 
@@ -194,11 +200,12 @@ contract DIDContract is MixinDidStorage, IDid {
    */
     function addNewAuthAddrByController(string memory did, address addr, string[] memory controller,
         string memory controllerSigner)
-    requireDIDControllerSign(did, controllerSigner) verifyMultiDIDFormat(controller)
+    requireDIDControllerSign(did, controllerSigner) verifyMultiDIDFormat(controller) notSelfAddr(did, addr)
     override public {
         bytes memory emptyPubKey = new bytes(0);
+        uint authIndex = fetchAuthIndex(did);
         addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller,
-            false, fetchAuthIndex(did));
+            false, authIndex);
         emit AddNewAuthAddr(did, addr, controller);
     }
 

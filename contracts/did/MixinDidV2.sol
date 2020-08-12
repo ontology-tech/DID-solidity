@@ -22,6 +22,12 @@ contract DIDContractV2 is MixinDidStorage, IDid {
         _;
     }
 
+    modifier notSelfAddr(string memory did, address addr){
+        address didAddr = DidUtils.parseAddrFromDID(bytes(did));
+        require(didAddr != addr, "no need to add self addr");
+        _;
+    }
+
     /**
     * @dev require msg.sender pass his public key while invoke,
     *      it means contract cannot invoke the function that modified by verifyPubKeySignature
@@ -122,7 +128,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
     function addKey(string memory did, bytes memory newPubKey, string[] memory controller)
     requireDIDSign(did) verifyMultiDIDFormat(controller)
     override public {
-        addNewPubKey(did, newPubKey, address(0), "EcdsaSecp256k1VerificationKey2019", controller, 0);
+        addNewPubKey(did, newPubKey, address(0), "EcdsaSecp256k1VerificationKey2019", controller, true, 0);
         emit AddKey(did, newPubKey, controller);
     }
 
@@ -133,10 +139,10 @@ contract DIDContractV2 is MixinDidStorage, IDid {
     * @param controller controller of newPubKey, they are some did
     */
     function addAddr(string memory did, address addr, string[] memory controller)
-    requireDIDSign(did) verifyMultiDIDFormat(controller)
+    requireDIDSign(did) verifyMultiDIDFormat(controller) notSelfAddr(did, addr)
     override public {
         bytes memory emptyPubKey = new bytes(0);
-        addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller, 0);
+        addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller, true, 0);
         emit AddAddr(did, addr, controller);
     }
 
@@ -150,7 +156,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
     requireDIDSign(did) verifyMultiDIDFormat(controller)
     override public {
         addNewPubKey(did, pubKey, address(0), "EcdsaSecp256k1VerificationKey2019", controller,
-            fetchAuthIndex(did));
+            false, fetchAuthIndex(did));
         emit AddNewAuthKey(did, pubKey, controller);
     }
 
@@ -161,10 +167,11 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param controller controller of newPubKey, they are some did
    */
     function addNewAuthAddr(string memory did, address addr, string[] memory controller)
-    requireDIDSign(did) verifyMultiDIDFormat(controller)
+    requireDIDSign(did) verifyMultiDIDFormat(controller) notSelfAddr(did, addr)
     override public {
         bytes memory emptyPubKey = new bytes(0);
-        addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller, fetchAuthIndex(did));
+        uint authIndex = fetchAuthIndex(did);
+        addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller, false, authIndex);
         emit AddNewAuthAddr(did, addr, controller);
     }
 
@@ -180,7 +187,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
     requireDIDControllerSign(did, controllerSigner) verifyMultiDIDFormat(controller)
     override public {
         addNewPubKey(did, pubKey, address(0), "EcdsaSecp256k1VerificationKey2019", controller,
-            fetchAuthIndex(did));
+            false, fetchAuthIndex(did));
         emit AddNewAuthKey(did, pubKey, controller);
     }
 
@@ -193,22 +200,24 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function addNewAuthAddrByController(string memory did, address addr, string[] memory controller,
         string memory controllerSigner)
-    requireDIDControllerSign(did, controllerSigner) verifyMultiDIDFormat(controller)
+    requireDIDControllerSign(did, controllerSigner) verifyMultiDIDFormat(controller) notSelfAddr(did, addr)
     override public {
         bytes memory emptyPubKey = new bytes(0);
-        addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller, fetchAuthIndex(did));
+        uint authIndex = fetchAuthIndex(did);
+        addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller,
+            false, authIndex);
         emit AddNewAuthAddr(did, addr, controller);
     }
 
     function addNewPubKey(string memory did, bytes memory pubKey, address addr, string memory keyType,
-        string[] memory controller, uint authIndex)
+        string[] memory controller, bool isPub, uint authIndex)
     private {
         require(controller.length >= 1);
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
         uint keyIndex = data[pubKeyListKey].keys.length + 2;
         string memory pubKeyId = string(abi.encodePacked(did, "#keys-", BytesUtils.uint2str(keyIndex)));
         StorageUtils.PublicKey memory pub = StorageUtils.PublicKey(pubKeyId, keyType, controller, pubKey,
-            addr, false, true, false, authIndex);
+            addr, false, isPub, authIndex > 0, authIndex);
         bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pub.pubKey, pub.ethAddr);
         bytes memory encodedPubKey = StorageUtils.serializePubKey(pub);
         bool replaced = data[pubKeyListKey].insert(pubKeyListSecondKey, encodedPubKey);
