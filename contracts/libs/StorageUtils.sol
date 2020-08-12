@@ -6,6 +6,8 @@ import "./ZeroCopySource.sol";
 import "./ZeroCopySink.sol";
 import "./KeyUtils.sol";
 import "./IterableMapping.sol";
+import "./DidUtils.sol";
+import "./BytesUtils.sol";
 
 library StorageUtils {
     using IterableMapping for IterableMapping.itmap;
@@ -13,37 +15,43 @@ library StorageUtils {
     // represent public key in did document
     struct PublicKey {
         string id; // public key id
-        string keyType; // public key type, in ethereum, the type is always EcdsaSecp256k1VerificationKey2019
+        string keyType; // public key type, in ethereum
         string[] controller; // did array, has some permission
         bytes pubKey; // public key
+        address ethAddr; // ethereum address, refer: https://www.w3.org/TR/did-spec-registries/#ethereumaddress
         bool deactivated; // is deactivated or not
         bool isPubKey; // existed in public key list or not
         bool isAuth; // existed in authentication list or not
-        uint authIndex; // index at authentication list
+        uint authIndex; // index at authentication list, 0 means no auth
+    }
+
+    function genPublicKeyFromDID(string memory did, string memory keyType) public pure returns (PublicKey memory){
+        address didAddr = DidUtils.parseAddrFromDID(bytes(did));
+        bytes memory id = abi.encodePacked(did, "#keys-1");
+        string[] memory controller = new string[](1);
+        controller[0] = did;
+        bytes memory pubKey = new bytes(0);
+        return PublicKey(string(id), keyType, controller, pubKey, didAddr, false, true, true, 1);
     }
 
     function serializePubKey(PublicKey memory publicKey) public pure returns (bytes memory){
-        bytes memory result = new bytes(0);
         bytes memory idBytes = ZeroCopySink.WriteVarBytes(bytes(publicKey.id));
-        result = abi.encodePacked(result, idBytes);
         bytes memory keyTypeBytes = ZeroCopySink.WriteVarBytes(bytes(publicKey.keyType));
-        result = abi.encodePacked(result, keyTypeBytes);
         bytes memory controllerLenBytes = ZeroCopySink.WriteUint255(publicKey.controller.length);
-        result = abi.encodePacked(result, controllerLenBytes);
+        bytes memory controllerBytes = new bytes(0);
         for (uint i = 0; i < publicKey.controller.length; i++) {
-            result = abi.encodePacked(result, ZeroCopySink.WriteVarBytes(bytes(publicKey.controller[i])));
+            controllerBytes = abi.encodePacked(controllerBytes,
+                ZeroCopySink.WriteVarBytes(bytes(publicKey.controller[i])));
         }
         bytes memory pubKeyBytes = ZeroCopySink.WriteVarBytes(publicKey.pubKey);
-        result = abi.encodePacked(result, pubKeyBytes);
+        bytes memory ethAddrBytes = ZeroCopySink.WriteUint255(uint256(publicKey.ethAddr));
         bytes memory deactivatedBytes = ZeroCopySink.WriteBool(publicKey.deactivated);
-        result = abi.encodePacked(result, deactivatedBytes);
         bytes memory isPubKeyBytes = ZeroCopySink.WriteBool(publicKey.isPubKey);
-        result = abi.encodePacked(result, isPubKeyBytes);
         bytes memory isAuthKeyBytes = ZeroCopySink.WriteBool(publicKey.isAuth);
-        result = abi.encodePacked(result, isAuthKeyBytes);
         bytes memory authIndexBytes = ZeroCopySink.WriteUint255(publicKey.authIndex);
-        result = abi.encodePacked(result, authIndexBytes);
-        return result;
+        // split result into two phase in case of too deep stack slots compiler error
+        bytes memory result = abi.encodePacked(idBytes, keyTypeBytes, controllerLenBytes, controllerBytes, pubKeyBytes);
+        return abi.encodePacked(result, ethAddrBytes, deactivatedBytes, isPubKeyBytes, isAuthKeyBytes, authIndexBytes);
     }
 
     function deserializePubKey(bytes memory data) public pure returns (PublicKey memory){
@@ -60,6 +68,8 @@ library StorageUtils {
         }
         bytes memory pubKey;
         (pubKey, offset) = ZeroCopySource.NextVarBytes(data, offset);
+        uint256 ethAddr;
+        (ethAddr, offset) = ZeroCopySource.NextUint255(data, offset);
         bool deactivated;
         bool isPubKey;
         bool isAuth;
@@ -68,14 +78,16 @@ library StorageUtils {
         (isAuth, offset) = ZeroCopySource.NextBool(data, offset);
         uint authIndex;
         (authIndex, offset) = ZeroCopySource.NextUint255(data, offset);
-        return PublicKey(string(id), string(keyType), controller, pubKey, deactivated, isPubKey, isAuth, authIndex);
+        return PublicKey(string(id), string(keyType), controller, pubKey, address(ethAddr),
+            deactivated, isPubKey, isAuth, authIndex);
     }
 
     /**
    * @dev query public key list
    * @param pubKeyList public key list
    */
-    function getAllPubKey(IterableMapping.itmap storage pubKeyList) public view returns (PublicKey[] memory) {
+    function getAllPubKey(string memory did, string memory typeOfDefaultKey, IterableMapping.itmap storage pubKeyList)
+    public view returns (PublicKey[] memory) {
         // first loop to calculate dynamic array size
         uint validKeySize = 0;
         PublicKey[] memory allKey = new PublicKey[](pubKeyList.size);
@@ -93,8 +105,9 @@ library StorageUtils {
             count++;
         }
         // second loop to filter result
-        PublicKey[] memory result = new PublicKey[](validKeySize);
-        count = 0;
+        PublicKey[] memory result = new PublicKey[](validKeySize + 1);
+        result[0] = genPublicKeyFromDID(did, typeOfDefaultKey);
+        count = 1;
         for (uint i = 0; i < allKey.length; i++) {
             if (!allKey[i].deactivated && allKey[i].isPubKey) {
                 result[count] = allKey[i];
@@ -108,7 +121,7 @@ library StorageUtils {
    * @dev query authentication list
    * @param pubKeyList public key list
    */
-    function getAllAuthKey(IterableMapping.itmap storage pubKeyList)
+    function getAllAuthKey(string memory did, string memory typeOfDefaultKey, IterableMapping.itmap storage pubKeyList)
     public view returns (PublicKey[] memory) {
         // first loop to calculate dynamic array size
         uint authKeySize = 0;
@@ -136,9 +149,10 @@ library StorageUtils {
             }
         }
         // copy allKey to result
-        PublicKey[] memory result = new PublicKey[](authKeySize);
+        PublicKey[] memory result = new PublicKey[](authKeySize + 1);
+        result[0] = genPublicKeyFromDID(did, typeOfDefaultKey);
         for (uint i = 0; i < authKeySize; i++) {
-            result[i] = allKey[count - authKeySize + i];
+            result[i + 1] = allKey[count - authKeySize + i];
         }
         return result;
     }

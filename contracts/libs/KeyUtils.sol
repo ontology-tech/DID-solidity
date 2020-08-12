@@ -20,8 +20,14 @@ library KeyUtils {
         return string(abi.encodePacked(did, "publicKey"));
     }
 
-    function genPubKeyListSecondKey(bytes memory pubKey) public pure returns (bytes32){
-        return keccak256(pubKey);
+    function genPubKeyListSecondKey(bytes memory pubKey, address addr) public pure returns (bytes32){
+        bytes32 pubKeyListSecondKey;
+        if (pubKey.length > 0) {
+            pubKeyListSecondKey = keccak256(pubKey);
+        } else {
+            pubKeyListSecondKey = keccak256(abi.encodePacked(addr));
+        }
+        return pubKeyListSecondKey;
     }
 
     function genControllerKey(string memory did) public pure returns (string memory) {

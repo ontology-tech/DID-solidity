@@ -25,6 +25,13 @@ library DidUtils {
         return addressBytes.length == 20;
     }
 
+    function parseAddrFromDID(bytes memory did) public pure returns (address){
+        uint prefixLen = 9;
+        bytes memory addressBytesData = BytesUtils.slice(did, prefixLen, did.length - prefixLen);
+        bytes memory addressBytes = BytesUtils.fromHex(string(addressBytesData));
+        return BytesUtils.bytesToAddress(addressBytes);
+    }
+
     /**
    * @dev parse public key to address
    * @param pubKey public key
