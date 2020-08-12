@@ -16,9 +16,9 @@ contract TestGetAllAuthKey {
         defaultController[0] = "did";
         bytes memory pubKey = new bytes(0);
         StorageUtils.PublicKey memory pub = StorageUtils.PublicKey(pubKeyId, "PUB_KEY_TYPE", defaultController, pubKey,
-            false, true, true, 0);
+            address(0), false, true, true, 0);
         pubKeyListData.insert(keccak256(bytes("1")), StorageUtils.serializePubKey(pub));
-        pub.authIndex = 1;
+        pub.authIndex = 4;
         pubKeyListData.insert(keccak256(bytes("2")), StorageUtils.serializePubKey(pub));
         pub.authIndex = 3;
         pubKeyListData.insert(keccak256(bytes("3")), StorageUtils.serializePubKey(pub));
@@ -37,13 +37,14 @@ contract TestGetAllAuthKey {
     }
 
     function testGetAllAuthKey() public {
-        StorageUtils.PublicKey[] memory allKeys = StorageUtils.getAllAuthKey(pubKeyListData);
-        require(allKeys.length == 6, 'length not equal');
+        StorageUtils.PublicKey[] memory allKeys = StorageUtils.getAllAuthKey("", "", pubKeyListData);
+        require(allKeys.length == 7, 'length not equal');
         require(allKeys[0].authIndex == 1, '0 not equal');
         require(allKeys[1].authIndex == 2, '1 not equal');
         require(allKeys[2].authIndex == 3, '2 not equal');
-        require(allKeys[3].authIndex == 5, '3 not equal');
-        require(allKeys[4].authIndex == 7, '4 not equal');
-        require(allKeys[5].authIndex == 10, '5 not equal');
+        require(allKeys[3].authIndex == 4, '3 not equal');
+        require(allKeys[4].authIndex == 5, '4 not equal');
+        require(allKeys[5].authIndex == 7, '5 not equal');
+        require(allKeys[6].authIndex == 10, '6 not equal');
     }
 }
