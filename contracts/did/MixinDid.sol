@@ -51,8 +51,13 @@ contract DIDContract is MixinDidStorage, IDid {
     * @dev require msg.sender must be did,
     * it means public key of msg.sender must be one of did authentication
     */
-    modifier onlyDIDOwner(string memory did) {
+    modifier requireDIDSign(string memory did) {
         require(verifyDIDSignature(did), "verify did signature failed");
+        _;
+    }
+
+    modifier requireDIDControllerSign(string memory did, string memory controller){
+        require(verifyController(did, controller), "verify did controller signature failed");
         _;
     }
 
@@ -103,7 +108,7 @@ contract DIDContract is MixinDidStorage, IDid {
    *    it means this did cannot been registered in the future
    * @param did did
    */
-    function deactivateID(string memory did) override public onlyDIDOwner(did) {
+    function deactivateID(string memory did) override public requireDIDSign(did) {
         // delete context
         delete data[KeyUtils.genContextKey(did)];
         // delete public key list
@@ -117,6 +122,7 @@ contract DIDContract is MixinDidStorage, IDid {
         // delete update time
         delete data[KeyUtils.genUpdateTimeKey(did)];
         // update status
+        did = BytesUtils.toLower(did);
         didStatus[did].activated = false;
         didStatus[did].authListLen = 0;
         emit Deactivate(did);
@@ -129,7 +135,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param pubKeyController controller of newPubKey, they are some did
    */
     function addKey(string memory did, bytes memory newPubKey, string[] memory pubKeyController)
-    override public onlyDIDOwner(did) verifyMultiDIDFormat(pubKeyController) {
+    override public requireDIDSign(did) verifyMultiDIDFormat(pubKeyController) {
         require(pubKeyController.length >= 1);
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
         uint keyIndex = data[pubKeyListKey].keys.length + 1;
@@ -149,7 +155,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param pubKey public key
    */
-    function deactivateKey(string memory did, bytes memory pubKey) override public onlyDIDOwner(did) {
+    function deactivateKey(string memory did, bytes memory pubKey) override public requireDIDSign(did) {
         StorageUtils.PublicKey memory key = deserializePubKey(did, pubKey);
         key.isPubKey = false;
         key.isAuth = false;
@@ -167,7 +173,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param controller controller of newPubKey, they are some did
    */
     function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller)
-    override public onlyDIDOwner(did) verifyMultiDIDFormat(controller) {
+    override public requireDIDSign(did) verifyMultiDIDFormat(controller) {
         authNewPubKey(did, pubKey, controller);
         updateTime(did);
     }
@@ -180,7 +186,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param controllerSigner tx signer should be one of did controller
    */
     function addNewAuthKeyByController(string memory did, bytes memory pubKey, string[] memory controller,
-        string memory controllerSigner) override public onlyDIDOwner(controllerSigner) verifyMultiDIDFormat(controller) {
+        string memory controllerSigner) override public
+    requireDIDControllerSign(did, controllerSigner) verifyMultiDIDFormat(controller) {
         authNewPubKey(did, pubKey, controller);
         updateTime(did);
     }
@@ -190,7 +197,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param pubKey public key
    */
-    function setAuthKey(string memory did, bytes memory pubKey) override public onlyDIDOwner(did) {
+    function setAuthKey(string memory did, bytes memory pubKey) override public requireDIDSign(did) {
         authPubKey(did, pubKey);
         updateTime(did);
     }
@@ -202,7 +209,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param controller one of did controller
    */
     function setAuthKeyByController(string memory did, bytes memory pubKey, string memory controller)
-    override public onlyDIDOwner(controller) {
+    override public requireDIDControllerSign(did, controller) {
         authPubKey(did, pubKey);
         updateTime(did);
     }
@@ -212,7 +219,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param pubKey public key
    */
-    function deactivateAuthKey(string memory did, bytes memory pubKey) override public onlyDIDOwner(did) {
+    function deactivateAuthKey(string memory did, bytes memory pubKey) override public requireDIDSign(did) {
         deAuthPubKey(did, pubKey);
         updateTime(did);
     }
@@ -224,7 +231,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param controller one of did controller
    */
     function deactivateAuthKeyByController(string memory did, bytes memory pubKey, string memory controller)
-    override public onlyDIDOwner(controller) {
+    override public requireDIDControllerSign(did, controller) {
         deAuthPubKey(did, pubKey);
         updateTime(did);
     }
@@ -234,7 +241,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param contexts contexts
    */
-    function addContext(string memory did, string[] memory contexts) override public onlyDIDOwner(did) {
+    function addContext(string memory did, string[] memory contexts) override public requireDIDSign(did) {
         insertContext(did, contexts);
         updateTime(did);
     }
@@ -244,7 +251,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param contexts contexts
    */
-    function removeContext(string memory did, string[] memory contexts) override public onlyDIDOwner(did) {
+    function removeContext(string memory did, string[] memory contexts) override public requireDIDSign(did) {
         string memory ctxKey = KeyUtils.genContextKey(did);
         for (uint i = 0; i < contexts.length; i++) {
             string memory ctx = contexts[i];
@@ -263,7 +270,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param controller one of did controller
    */
     function addController(string memory did, string memory controller)
-    override public onlyDIDOwner(did) {
+    override public requireDIDSign(did) {
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
         bool replaced = data[controllerKey].insert(key, bytes(controller));
@@ -277,7 +284,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param controller one of did controller
    */
-    function removeController(string memory did, string memory controller) override public onlyDIDOwner(did) {
+    function removeController(string memory did, string memory controller) override public requireDIDSign(did) {
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
         bool success = data[controllerKey].remove(key);
@@ -294,7 +301,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param serviceEndpoint service endpoint
    */
     function addService(string memory did, string memory serviceId, string memory serviceType, string memory serviceEndpoint)
-    override public onlyDIDOwner(did) {
+    override public requireDIDSign(did) {
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
         StorageUtils.Service memory service = StorageUtils.Service(serviceId, serviceType, serviceEndpoint);
@@ -313,7 +320,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param serviceEndpoint service endpoint
    */
     function updateService(string memory did, string memory serviceId, string memory serviceType, string memory serviceEndpoint)
-    override public onlyDIDOwner(did) {
+    override public requireDIDSign(did) {
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
         StorageUtils.Service memory service = StorageUtils.Service(serviceId, serviceType, serviceEndpoint);
@@ -329,7 +336,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param serviceId service id
    */
-    function removeService(string memory did, string memory serviceId) override public onlyDIDOwner(did) {
+    function removeService(string memory did, string memory serviceId) override public requireDIDSign(did) {
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
         bool success = data[serviceKey].remove(key);
