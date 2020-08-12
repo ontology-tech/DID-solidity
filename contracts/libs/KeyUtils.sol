@@ -48,16 +48,6 @@ library KeyUtils {
         return keccak256(bytes(serviceId));
     }
 
-    function genCreateTimeKey(string memory did) public pure returns (string memory) {
-        did = BytesUtils.toLower(did);
-        return string(abi.encodePacked(did, "createTime"));
-    }
-
-    function genCreateTimeSecondKey() public pure returns (bytes32) {
-        // return keccak256("createTime");
-        return 0x0ec4c19546057c37b4587fd3965245ae45dc2424ac1b5ef165832a224051b594;
-    }
-
     function genUpdateTimeKey(string memory did) public pure returns (string memory) {
         did = BytesUtils.toLower(did);
         return string(abi.encodePacked(did, "updateTime"));
