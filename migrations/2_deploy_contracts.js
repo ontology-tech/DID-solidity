@@ -26,6 +26,8 @@ module.exports = async function (depolyer) {
     await depolyer.link(ZeroCopySource, StorageUtils);
     await depolyer.link(ZeroCopySink, StorageUtils);
     await depolyer.link(KeyUtils, StorageUtils);
+    await depolyer.link(BytesUtils, StorageUtils);
+    await depolyer.link(DidUtils, StorageUtils);
     await depolyer.link(IterableMapping, StorageUtils);
     await depolyer.deploy(StorageUtils);
 
