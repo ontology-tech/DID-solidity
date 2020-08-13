@@ -17,11 +17,11 @@ library StorageUtils {
         string id; // public key id
         string keyType; // public key type, in ethereum
         string[] controller; // did array, has some permission
-        bytes pubKey; // public key
-        address ethAddr; // ethereum address, refer: https://www.w3.org/TR/did-spec-registries/#ethereumaddress
+        bytes pubKeyData; // public key or address bytes
+        //        address ethAddr; // ethereum address, refer: https://www.w3.org/TR/did-spec-registries/#ethereumaddress
         bool deactivated; // is deactivated or not
         bool isPubKey; // existed in public key list or not
-        bool isAuth; // existed in authentication list or not
+        //        bool isAuth; // existed in authentication list or not
         uint authIndex; // index at authentication list, 0 means no auth
     }
 
@@ -30,8 +30,7 @@ library StorageUtils {
         bytes memory id = abi.encodePacked(did, "#keys-1");
         string[] memory controller = new string[](1);
         controller[0] = did;
-        bytes memory pubKey = new bytes(0);
-        return PublicKey(string(id), keyType, controller, pubKey, didAddr, false, true, true, 1);
+        return PublicKey(string(id), keyType, controller, abi.encodePacked(didAddr), false, true, 1);
     }
 
     function serializePubKey(PublicKey memory publicKey) public pure returns (bytes memory){
@@ -43,15 +42,15 @@ library StorageUtils {
             controllerBytes = abi.encodePacked(controllerBytes,
                 ZeroCopySink.WriteVarBytes(bytes(publicKey.controller[i])));
         }
-        bytes memory pubKeyBytes = ZeroCopySink.WriteVarBytes(publicKey.pubKey);
-        bytes memory ethAddrBytes = ZeroCopySink.WriteUint255(uint256(publicKey.ethAddr));
+        bytes memory pubKeyBytes = ZeroCopySink.WriteVarBytes(publicKey.pubKeyData);
+        //        bytes memory ethAddrBytes = ZeroCopySink.WriteUint255(uint256(publicKey.ethAddr));
         bytes memory deactivatedBytes = ZeroCopySink.WriteBool(publicKey.deactivated);
         bytes memory isPubKeyBytes = ZeroCopySink.WriteBool(publicKey.isPubKey);
-        bytes memory isAuthKeyBytes = ZeroCopySink.WriteBool(publicKey.isAuth);
+        //        bytes memory isAuthKeyBytes = ZeroCopySink.WriteBool(publicKey.isAuth);
         bytes memory authIndexBytes = ZeroCopySink.WriteUint255(publicKey.authIndex);
         // split result into two phase in case of too deep stack slots compiler error
         bytes memory result = abi.encodePacked(idBytes, keyTypeBytes, controllerLenBytes, controllerBytes, pubKeyBytes);
-        return abi.encodePacked(result, ethAddrBytes, deactivatedBytes, isPubKeyBytes, isAuthKeyBytes, authIndexBytes);
+        return abi.encodePacked(result, deactivatedBytes, isPubKeyBytes, authIndexBytes);
     }
 
     function deserializePubKey(bytes memory data) public pure returns (PublicKey memory){
@@ -68,18 +67,18 @@ library StorageUtils {
         }
         bytes memory pubKey;
         (pubKey, offset) = ZeroCopySource.NextVarBytes(data, offset);
-        uint256 ethAddr;
-        (ethAddr, offset) = ZeroCopySource.NextUint255(data, offset);
+        //        uint256 ethAddr;
+        //        (ethAddr, offset) = ZeroCopySource.NextUint255(data, offset);
         bool deactivated;
         bool isPubKey;
-        bool isAuth;
+        //        bool isAuth;
         (deactivated, offset) = ZeroCopySource.NextBool(data, offset);
         (isPubKey, offset) = ZeroCopySource.NextBool(data, offset);
-        (isAuth, offset) = ZeroCopySource.NextBool(data, offset);
+        //        (isAuth, offset) = ZeroCopySource.NextBool(data, offset);
         uint authIndex;
         (authIndex, offset) = ZeroCopySource.NextUint255(data, offset);
-        return PublicKey(string(id), string(keyType), controller, pubKey, address(ethAddr),
-            deactivated, isPubKey, isAuth, authIndex);
+        return PublicKey(string(id), string(keyType), controller, pubKey,
+            deactivated, isPubKey, authIndex);
     }
 
     /**
@@ -134,7 +133,7 @@ library StorageUtils {
         ) {
             (, bytes memory pubKeyData) = pubKeyList.iterate_get(i);
             allKey[count] = deserializePubKey(pubKeyData);
-            if (!allKey[count].deactivated && allKey[count].isAuth && allKey[count].authIndex > 0) {
+            if (!allKey[count].deactivated && allKey[count].authIndex > 0) {
                 authKeySize++;
             }
             count++;
@@ -159,52 +158,48 @@ library StorageUtils {
 
     function insertNewPubKey(IterableMapping.itmap storage pubKeyList, PublicKey memory pub)
     public {
-        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pub.pubKey, pub.ethAddr);
+        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pub.pubKeyData);
         bytes memory encodedPubKey = serializePubKey(pub);
         bool replaced = pubKeyList.insert(pubKeyListSecondKey, encodedPubKey);
         require(!replaced, "key existed");
     }
 
-    function authPubKey(IterableMapping.itmap storage pubKeyList, bytes memory pubKey,
-        address addr, uint authIndex)
+    function authPubKey(IterableMapping.itmap storage pubKeyList, bytes memory pubKey, uint authIndex)
     public {
-        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey, addr);
+        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey);
         bytes memory pubKeyData = pubKeyList.data[pubKeyListSecondKey].value;
         require(pubKeyData.length > 0, "key not exist");
         PublicKey memory key = deserializePubKey(pubKeyData);
         require(!key.deactivated, "key deactivated");
-        require(!key.isAuth, "key authenticated");
-        key.isAuth = true;
+        require(key.authIndex == 0, "key authenticated");
+        //        key.isAuth = true;
         key.authIndex = authIndex;
         bytes memory encodedPubKey = serializePubKey(key);
         pubKeyList.insert(pubKeyListSecondKey, encodedPubKey);
     }
 
-    function deactivatePubKey(IterableMapping.itmap storage pubKeyList, bytes memory pubKey,
-        address addr)
+    function deactivatePubKey(IterableMapping.itmap storage pubKeyList, bytes memory pubKey)
     public {
-        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey, addr);
+        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey);
         bytes memory pubKeyData = pubKeyList.data[pubKeyListSecondKey].value;
         require(pubKeyData.length > 0, "key not exist");
         PublicKey memory key = deserializePubKey(pubKeyData);
         require(!key.deactivated, "key deactivated");
         key.isPubKey = false;
-        key.isAuth = false;
         key.deactivated = true;
         key.authIndex = 0;
         bytes memory encodedPubKey = serializePubKey(key);
         pubKeyList.insert(pubKeyListSecondKey, encodedPubKey);
     }
 
-    function deAuthPubKey(IterableMapping.itmap storage pubKeyList, bytes memory pubKey, address addr)
+    function deAuthPubKey(IterableMapping.itmap storage pubKeyList, bytes memory pubKey)
     public {
-        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey, addr);
+        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey);
         bytes memory pubKeyData = pubKeyList.data[pubKeyListSecondKey].value;
         require(pubKeyData.length > 0, "key not exist");
         PublicKey memory key = deserializePubKey(pubKeyData);
         require(!key.deactivated, "key deactivated");
-        require(key.isAuth, "key unauthenticated");
-        key.isAuth = false;
+        require(key.authIndex > 0, "key unauthenticated");
         key.authIndex = 0;
         bytes memory encodedPubKey = serializePubKey(key);
         pubKeyList.insert(pubKeyListSecondKey, encodedPubKey);

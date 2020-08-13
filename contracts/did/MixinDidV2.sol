@@ -139,8 +139,9 @@ contract DIDContractV2 is MixinDidStorage, IDid {
         IterableMapping.itmap storage pubKeyList = data[KeyUtils.genPubKeyListKey(did)];
         uint keyIndex = pubKeyList.keys.length + 2;
         string memory pubKeyId = string(abi.encodePacked(did, "#keys-", BytesUtils.uint2str(keyIndex)));
-        StorageUtils.PublicKey memory pub = StorageUtils.PublicKey(pubKeyId, keyType, controller, pubKey,
-            addr, false, isPub, isAuth, isAuth ? fetchAuthIndex(did) : 0);
+        bytes memory pubKeyData = encodePubKeyAndAddr(pubKey, addr);
+        StorageUtils.PublicKey memory pub = StorageUtils.PublicKey(pubKeyId, keyType, controller, pubKeyData,
+            false, isPub, isAuth ? fetchAuthIndex(did) : 0);
         StorageUtils.insertNewPubKey(pubKeyList, pub);
         updateTime(did);
     }
@@ -199,7 +200,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
 
     function authPubKey(string memory did, bytes memory pubKey, address addr) internal {
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-        StorageUtils.authPubKey(data[pubKeyListKey], pubKey, addr, fetchAuthIndex(did));
+        StorageUtils.authPubKey(data[pubKeyListKey], encodePubKeyAndAddr(pubKey, addr), fetchAuthIndex(did));
         updateTime(did);
     }
 
@@ -237,7 +238,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
     function deactivatePubKey(string memory did, bytes memory pubKey, address addr)
     internal {
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-        StorageUtils.deactivatePubKey(data[pubKeyListKey], pubKey, addr);
+        StorageUtils.deactivatePubKey(data[pubKeyListKey], encodePubKeyAndAddr(pubKey, addr));
         updateTime(did);
     }
 
@@ -300,8 +301,17 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function deAuthPubKey(string memory did, bytes memory pubKey, address addr) internal {
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-        StorageUtils.deAuthPubKey(data[pubKeyListKey], pubKey, addr);
+        StorageUtils.deAuthPubKey(data[pubKeyListKey], encodePubKeyAndAddr(pubKey, addr));
         updateTime(did);
+    }
+
+    function encodePubKeyAndAddr(bytes memory pubKey, address addr) internal pure returns (bytes memory){
+        // pubKey may be empty, but pack it has no matter
+        bytes memory pubKeyData = abi.encodePacked(pubKey);
+        if (addr != address(0)) {
+            pubKeyData = abi.encodePacked(pubKeyData, addr);
+        }
+        return pubKeyData;
     }
 
     /**
@@ -507,13 +517,13 @@ contract DIDContractV2 is MixinDidStorage, IDid {
                 return (true, did);
             }
             string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-            bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(signerPubKey, msg.sender);
+            bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(encodePubKeyAndAddr(signerPubKey, address(0)));
             if (!data[pubKeyListKey].contains(pubKeyListSecondKey)) {
                 return (false, did);
             }
             StorageUtils.PublicKey memory pub =
             StorageUtils.deserializePubKey(data[pubKeyListKey].data[pubKeyListSecondKey].value);
-            if (pub.deactivated || !pub.isAuth) {
+            if (pub.deactivated || pub.authIndex == 0) {
                 return (false, did);
             }
             return (true, did);

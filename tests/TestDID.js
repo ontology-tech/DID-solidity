@@ -19,14 +19,13 @@ contract('DID', (accounts) => {
         let didContract = await DIDContract.at(instance.address);
         let allPubKey = await didContract.getAllPubKey(did);
         assert.equal(1, allPubKey.length);
-        assert.equal(accounts[0], allPubKey[0].ethAddr);
+        assert.equal(accounts[0].toLowerCase(), allPubKey[0].pubKeyData.toLowerCase());
         assert.equal("EcdsaSecp256k1RecoveryMethod2020", allPubKey[0].keyType);
         assert.ok(allPubKey[0].isPubKey);
         let allAuthPubKey = await didContract.getAllAuthKey(did);
         assert.equal(1, allAuthPubKey.length);
-        assert.equal(accounts[0], allAuthPubKey[0].ethAddr);
+        assert.equal(accounts[0].toLowerCase(), allAuthPubKey[0].pubKeyData.toLowerCase());
         assert.equal("EcdsaSecp256k1RecoveryMethod2020", allAuthPubKey[0].keyType);
-        assert.ok(allAuthPubKey[0].isAuth);
     });
     let privKey = Buffer.from("34654b1fb0ee17a235950fc2b8177af4e69730b180efad7b78b772740c2c6ca0", 'hex');
     let anotherPubKey = eth.privateToPublic(privKey);
@@ -44,7 +43,7 @@ contract('DID', (accounts) => {
         assert.equal(did, addKeyEvt.args.controller[0]);
         let allPubKey = await didContract.getAllPubKey(did);
         assert.equal(2, allPubKey.length);
-        assert.equal('0x' + anotherPubKey.toString('hex').toLowerCase(), allPubKey[1].pubKey);
+        assert.equal('0x' + anotherPubKey.toString('hex').toLowerCase(), allPubKey[1].pubKeyData);
         assert.ok(allPubKey[1].isPubKey);
         let allAuthPubKey = await didContract.getAllAuthKey(did);
         assert.equal(1, allAuthPubKey.length);
@@ -61,12 +60,11 @@ contract('DID', (accounts) => {
         assert.equal('0x' + anotherPubKey.toString('hex').toLowerCase(), evt.args.pubKey.toLowerCase());
         let allPubKey = await didContract.getAllPubKey(did);
         assert.equal(2, allPubKey.length);
-        assert.equal('0x' + anotherPubKey.toString('hex').toLowerCase(), allPubKey[1].pubKey);
+        assert.equal('0x' + anotherPubKey.toString('hex').toLowerCase(), allPubKey[1].pubKeyData);
         assert.ok(allPubKey[1].isPubKey);
         let allAuthPubKey = await didContract.getAllAuthKey(did);
         assert.equal(2, allAuthPubKey.length);
-        assert.equal('0x' + anotherPubKey.toString('hex').toLowerCase(), allAuthPubKey[1].pubKey);
-        assert.ok(allAuthPubKey[1].isAuth);
+        assert.equal('0x' + anotherPubKey.toString('hex').toLowerCase(), allAuthPubKey[1].pubKeyData);
         assert.equal(allAuthPubKey[1].authIndex, 2);
     });
     it('deactivate auth key', async () => {
@@ -266,12 +264,12 @@ contract('DID', (accounts) => {
         let allPubKey = await didContract.getAllPubKey(did);
         for (let i = 0; i < allPubKey.length; i++) {
             let pubKey = allPubKey[i];
-            if (pubKey.pubKey.length <= 2) {
+            if (pubKey.pubKeyData.length !== 130) {
                 continue;
             }
-            let tx = await didContract.deactivateKey(did, pubKey.pubKey, emptySignerPubKey, {from: accounts[0]});
+            console.log("deactivateKey:", pubKey.pubKeyData);
+            let tx = await didContract.deactivateKey(did, pubKey.pubKeyData, emptySignerPubKey, {from: accounts[0]});
             assert.equal(1, tx.logs.length);
-            // console.log(tx.logs[0].did, "deactivate", tx.logs[0].pubKey);
             console.log("deactivateKey gas:", tx.receipt.gasUsed);
         }
         allPubKey = await didContract.getAllPubKey(did);
@@ -288,7 +286,7 @@ contract('DID', (accounts) => {
         assert.equal(tx.logs[0].event, "AddAddr");
         let allPubKey = await didContract.getAllPubKey(did);
         assert.equal(allPubKey.length, 2);
-        assert.equal(allPubKey[1].ethAddr.toLowerCase(), accounts[1].toLowerCase());
+        assert.equal(allPubKey[1].pubKeyData.toLowerCase(), accounts[1].toLowerCase());
         assert.equal(allPubKey[1].keyType, "EcdsaSecp256k1RecoveryMethod2020");
 
         tx = await didContract.setAuthAddr(did, accounts[1], emptySignerPubKey, {from: accounts[0]});

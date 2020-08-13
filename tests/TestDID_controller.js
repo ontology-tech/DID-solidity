@@ -48,8 +48,9 @@ contract('DID', (accounts) => {
         assert.equal(1, allPubKey.length);
         let allAuthPubKey = await didContract.getAllAuthKey(did);
         assert.equal(2, allAuthPubKey.length);
-        assert.equal('0x' + newAuthKey.toString('hex').toLowerCase(), allAuthPubKey[1].pubKey);
-        assert.ok(allAuthPubKey[1].isAuth);
+        assert.equal('0x' + newAuthKey.toString('hex').toLowerCase(),
+            allAuthPubKey[1].pubKeyData.toLowerCase());
+        assert.ok(allAuthPubKey[1].authIndex > 0);
     });
     // add another key, this key has no authentication
     privKey = Buffer.from("30b9a20f95cd7a3acd48fcbd15a3628e295d2fd6233027e3162e57834cd44302", 'hex');
@@ -72,7 +73,7 @@ contract('DID', (accounts) => {
         assert.equal(2, allPubKey.length);
         let allAuthPubKey = await didContract.getAllAuthKey(did);
         assert.equal(3, allAuthPubKey.length);
-        assert.ok(allAuthPubKey[2].isAuth);
+        assert.ok(allAuthPubKey[2].authIndex > 0);
     });
     it('deactivate auth key by controller', async () => {
         let instance = await EternalStorageProxy.deployed();
@@ -113,8 +114,8 @@ contract('DID', (accounts) => {
         assert.equal(2, allPubKey.length);
         let allAuthPubKey = await didContract.getAllAuthKey(did);
         assert.equal(3, allAuthPubKey.length);
-        assert.equal(allAuthPubKey[2].ethAddr.toLowerCase(), accounts[2].toLowerCase());
-        assert.ok(allAuthPubKey[1].isAuth);
+        assert.equal(allAuthPubKey[2].pubKeyData.toLowerCase(), accounts[2].toLowerCase());
+        assert.ok(allAuthPubKey[1].authIndex > 0);
     });
     it('test set auth addr by controller', async () => {
         let instance = await EternalStorageProxy.deployed();
@@ -132,7 +133,7 @@ contract('DID', (accounts) => {
         assert.equal(3, allPubKey.length);
         let allAuthPubKey = await didContract.getAllAuthKey(did);
         assert.equal(4, allAuthPubKey.length);
-        assert.ok(allAuthPubKey[2].isAuth);
+        assert.ok(allAuthPubKey[2].authIndex > 0);
     });
     it('test deactivate auth addr by controller', async () => {
         let instance = await EternalStorageProxy.deployed();
