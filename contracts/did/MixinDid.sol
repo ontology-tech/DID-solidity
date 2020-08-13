@@ -140,7 +140,7 @@ contract DIDContract is MixinDidStorage, IDid {
         uint keyIndex = pubKeyList.keys.length + 2;
         string memory pubKeyId = string(abi.encodePacked(did, "#keys-", BytesUtils.uint2str(keyIndex)));
         StorageUtils.PublicKey memory pub = StorageUtils.PublicKey(pubKeyId, keyType, controller, pubKey,
-            addr, false, isPub, isAuth, isAuth ? 0 : fetchAuthIndex(did));
+            addr, false, isPub, isAuth, isAuth ? fetchAuthIndex(did) : 0);
         StorageUtils.insertNewPubKey(pubKeyList, pub);
         updateTime(did);
     }
@@ -496,22 +496,28 @@ contract DIDContract is MixinDidStorage, IDid {
         if (didStatus[did].deactivated) {
             return (false, did);
         }
-        if (signerPubKey.length > 0) {
-            address signer = DidUtils.pubKeyToAddr(signerPubKey);
-            if ((signer != msg.sender && signer != tx.origin)) {
-                return (false, did);
-            }
-        }
-        string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
-        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(signerPubKey, msg.sender);
-        if (!data[pubKeyListKey].contains(pubKeyListSecondKey)) {
-            return (false, did);
-        }
         // if signerPubKey.length > 0, verify signerPubKey is listed in self public key list and authenticated
         // else verify msg.sender is listed in self public key list and authenticated
-        StorageUtils.PublicKey memory pub =
-        StorageUtils.deserializePubKey(data[pubKeyListKey].data[pubKeyListSecondKey].value);
-        return (!pub.deactivated && pub.isAuth, did);
+        address didAddr = DidUtils.parseAddrFromDID(bytes(did));
+        if (signerPubKey.length == 0) {
+            return (didAddr == msg.sender || didAddr == tx.origin, did);
+        } else {
+            address pubKeySigner = DidUtils.pubKeyToAddr(signerPubKey);
+            if (pubKeySigner == didAddr && (pubKeySigner == msg.sender || pubKeySigner == tx.origin)) {
+                return (true, did);
+            }
+            string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
+            bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(signerPubKey, msg.sender);
+            if (!data[pubKeyListKey].contains(pubKeyListSecondKey)) {
+                return (false, did);
+            }
+            StorageUtils.PublicKey memory pub =
+            StorageUtils.deserializePubKey(data[pubKeyListKey].data[pubKeyListSecondKey].value);
+            if (pub.deactivated || !pub.isAuth) {
+                return (false, did);
+            }
+            return (true, did);
+        }
     }
 
     /**

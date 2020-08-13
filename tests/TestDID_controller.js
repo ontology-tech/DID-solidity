@@ -1,35 +1,42 @@
 const eth = require('ethereumjs-util');
 const EternalStorageProxy = artifacts.require("EternalStorageProxy");
 const DIDContract = artifacts.require("DIDContract");
-const keccak256 = require('js-sha3').keccak256;
 
 contract('DID', (accounts) => {
     // generate different did at every test
-    let did = 'did:etho:' + accounts[0].slice(2);
+    let did = 'did:etho:' + accounts[0].slice(2).toLowerCase();
     console.log('did:', did);
-    let controller = 'did:etho:' + accounts[1].slice(2);
+    let controller = 'did:etho:' + accounts[1].slice(2).toLowerCase();
     console.log('controller:', controller);
+    let emptySignerPubKey = new Buffer('');
+    let privKey = Buffer.from("436f5568bf64ccfb273da130d4a04f87f7f86d55fd5eae49da771ad2ea79cc8f", 'hex');
+    let newAuthKey = eth.privateToPublic(privKey);
+    console.log('newAuthKey:', newAuthKey.toString('hex'));
+    privKey = Buffer.from("30b9a20f95cd7a3acd48fcbd15a3628e295d2fd6233027e3162e57834cd44302", 'hex');
+    let controllerPubKey = eth.privateToPublic(privKey);
+    console.log('controllerPubKey:', newAuthKey.toString('hex'));
     it('add controller', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
         // add controller
-        let addControllerTx = await didContract.addController(did, controller);
+        let addControllerTx = await didContract.addController(did, controller, emptySignerPubKey);
         console.log("addController gas: ", addControllerTx.receipt.gasUsed);
         assert.equal(1, addControllerTx.logs.length);
         assert.equal("AddController", addControllerTx.logs[0].event);
-        assert.equal(did, addControllerTx.logs[0].args.did);
+        assert.equal(did, addControllerTx.logs[0].args.did.toLowerCase());
         assert.equal(controller, addControllerTx.logs[0].args.controller);
+        // controller add another auth key(accounts[3])
+        await didContract.addNewAuthKey(controller, controllerPubKey, [controller], emptySignerPubKey,
+            {from: accounts[1]});
     });
-    let privKey = Buffer.from("436f5568bf64ccfb273da130d4a04f87f7f86d55fd5eae49da771ad2ea79cc8f", 'hex');
-    let newAuthKey = eth.privateToPublic(privKey);
-    console.log('newAuthKey:', newAuthKey.toString('hex'));
+
     it('add new auth key by controller', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
         let newAuthKeyController = [did, controller];
-        // use controller to sign tx
+        // use controller to sign tx, parse emptySignerPubKey, means controller signed by address
         let tx = await didContract.addNewAuthKeyByController(did, newAuthKey, newAuthKeyController,
-            controller, {from: accounts[1]});
+            controller, emptySignerPubKey, {from: accounts[1]});
         console.log("addNewAuthKeyByController gas: ", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         let evt = tx.logs[0];
@@ -51,10 +58,10 @@ contract('DID', (accounts) => {
     it('set auth key by controller', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
-        await didContract.addKey(did, anotherKey, [did], {from: accounts[0]});
-        // set auth by controller
-        let setAuthKeyTx = await didContract.setAuthKeyByController(did, anotherKey, controller,
-            {from: accounts[1]});
+        await didContract.addKey(did, anotherKey, [did], emptySignerPubKey, {from: accounts[0]});
+        // set auth by controller, pass controllerPubKey, means signed by public key
+        let setAuthKeyTx = await didContract.setAuthKeyByController(did, anotherKey, controller, controllerPubKey,
+            {from: accounts[3]});
         console.log("setAuthKeyByController gas: ", setAuthKeyTx.receipt.gasUsed);
         assert.equal(1, setAuthKeyTx.logs.length);
         let evt = setAuthKeyTx.logs[0];
@@ -70,8 +77,8 @@ contract('DID', (accounts) => {
     it('deactivate auth key by controller', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
-        let tx = await didContract.deactivateAuthKeyByController(did, anotherKey, controller,
-            {from: accounts[1]});
+        let tx = await didContract.deactivateAuthKeyByController(did, anotherKey, controller, controllerPubKey,
+            {from: accounts[3]});
         console.log("deactivateAuthKeyByController gas: ", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         let evt = tx.logs[0];
@@ -87,7 +94,7 @@ contract('DID', (accounts) => {
     it('verify controller', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
-        let verified = await didContract.verifyController(did, controller, {from: accounts[1]})
+        let verified = await didContract.verifyController(did, controller, emptySignerPubKey, {from: accounts[1]})
         assert.ok(verified);
     });
     it('test add new auth addr by controller', async () => {
@@ -96,7 +103,7 @@ contract('DID', (accounts) => {
         let newAuthKeyController = [did, controller];
         // use controller to sign tx
         let tx = await didContract.addNewAuthAddrByController(did, accounts[2], newAuthKeyController,
-            controller, {from: accounts[1]});
+            controller, controllerPubKey, {from: accounts[3]});
         console.log("addNewAuthAddrByController gas: ", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         let evt = tx.logs[0];
@@ -112,10 +119,10 @@ contract('DID', (accounts) => {
     it('test set auth addr by controller', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
-        await didContract.addAddr(did, accounts[3], [did], {from: accounts[0]});
+        await didContract.addAddr(did, accounts[3], [did], emptySignerPubKey, {from: accounts[0]});
         // set auth by controller
-        let tx = await didContract.setAuthAddrByController(did, accounts[3], controller,
-            {from: accounts[1]});
+        let tx = await didContract.setAuthAddrByController(did, accounts[3], controller, controllerPubKey,
+            {from: accounts[3]});
         console.log("setAuthAddrByController gas: ", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         let evt = tx.logs[0];
@@ -130,8 +137,8 @@ contract('DID', (accounts) => {
     it('test deactivate auth addr by controller', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
-        let tx = await didContract.deactivateAuthAddrByController(did, accounts[3], controller,
-            {from: accounts[1]});
+        let tx = await didContract.deactivateAuthAddrByController(did, accounts[3], controller, controllerPubKey,
+            {from: accounts[3]});
         console.log("deactivateAuthAddrByController gas: ", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         let evt = tx.logs[0];

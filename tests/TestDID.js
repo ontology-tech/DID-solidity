@@ -1,7 +1,6 @@
 const eth = require('ethereumjs-util');
 const EternalStorageProxy = artifacts.require("EternalStorageProxy");
 const DIDContract = artifacts.require("DIDContract");
-const keccak256 = require('js-sha3').keccak256;
 const DIDContractV2 = artifacts.require("DIDContractV2");
 const BytesUtils = artifacts.require("BytesUtils");
 const DidUtils = artifacts.require("DidUtils");
@@ -12,8 +11,9 @@ const StorageUtils = artifacts.require("StorageUtils");
 
 
 contract('DID', (accounts) => {
-    let did = 'did:etho:' + accounts[0].slice(2);
+    let did = 'did:etho:' + accounts[0].slice(2).toLowerCase();
     console.log('did:', did);
+    let emptySignerPubKey = new Buffer('');
     it('test for default public key', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
@@ -34,12 +34,12 @@ contract('DID', (accounts) => {
     it('add another public key', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
-        let tx = await didContract.addKey(did, anotherPubKey, [did], {from: accounts[0]});
+        let tx = await didContract.addKey(did, anotherPubKey, [did], emptySignerPubKey, {from: accounts[0]});
         console.log("addKey gas:", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         let addKeyEvt = tx.logs[0];
         assert.equal("AddKey", addKeyEvt.event);
-        assert.equal(did, addKeyEvt.args.did);
+        assert.equal(did.toLowerCase(), addKeyEvt.args.did.toLowerCase());
         assert.equal('0x' + anotherPubKey.toString('hex').toLowerCase(), addKeyEvt.args.pubKey.toLowerCase());
         assert.equal(did, addKeyEvt.args.controller[0]);
         let allPubKey = await didContract.getAllPubKey(did);
@@ -52,12 +52,12 @@ contract('DID', (accounts) => {
     it('set auth key', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
-        let tx = await didContract.setAuthKey(did, anotherPubKey);
+        let tx = await didContract.setAuthKey(did, anotherPubKey, emptySignerPubKey);
         assert.equal(1, tx.logs.length);
         console.log("setAuthKey gas:", tx.receipt.gasUsed);
         let evt = tx.logs[0];
         assert.equal("SetAuthKey", evt.event);
-        assert.equal(did, evt.args.did);
+        assert.equal(did.toLowerCase(), evt.args.did.toLowerCase());
         assert.equal('0x' + anotherPubKey.toString('hex').toLowerCase(), evt.args.pubKey.toLowerCase());
         let allPubKey = await didContract.getAllPubKey(did);
         assert.equal(2, allPubKey.length);
@@ -72,12 +72,12 @@ contract('DID', (accounts) => {
     it('deactivate auth key', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
-        let tx = await didContract.deactivateAuthKey(did, anotherPubKey);
+        let tx = await didContract.deactivateAuthKey(did, anotherPubKey, emptySignerPubKey);
         console.log("deactivateAuthKey gas:", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         let evt = tx.logs[0];
         assert.equal("DeactivateAuthKey", evt.event);
-        assert.equal(did, evt.args.did);
+        assert.equal(did.toLowerCase(), evt.args.did.toLowerCase());
         assert.equal('0x' + anotherPubKey.toString('hex').toLowerCase(), evt.args.pubKey.toLowerCase());
         let allAuthPubKey = await didContract.getAllAuthKey(did);
         assert.equal(1, allAuthPubKey.length);
@@ -91,11 +91,11 @@ contract('DID', (accounts) => {
     it('auth new key', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
-        let tx = await didContract.addNewAuthKey(did, newAuthKey, [did], {from: accounts[0]});
+        let tx = await didContract.addNewAuthKey(did, newAuthKey, [did], emptySignerPubKey, {from: accounts[0]});
         console.log("addNewAuthKey gas:", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         assert.equal("AddNewAuthKey", tx.logs[0].event);
-        assert.equal(did, tx.logs[0].args.did);
+        assert.equal(did.toLowerCase(), tx.logs[0].args.did.toLowerCase());
         assert.equal('0x' + newAuthKey.toString('hex').toLowerCase(), tx.logs[0].args.pubKey.toLowerCase());
         // console.log(tx.logs[0].args.controller);
         let allAuthPubKey = await didContract.getAllAuthKey(did);
@@ -107,7 +107,7 @@ contract('DID', (accounts) => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
         let ctx = ["context1", "context2"];
-        let addCtxTx = await didContract.addContext(did, ctx);
+        let addCtxTx = await didContract.addContext(did, ctx, emptySignerPubKey);
         console.log("addContext gas:", addCtxTx.receipt.gasUsed);
         let allCtx = await didContract.getContext(did);
         // console.log(allCtx);
@@ -117,7 +117,7 @@ contract('DID', (accounts) => {
         assert.equal("AddContext", addCtxTx.logs[1].event);
         assert.equal(ctx[0], addCtxTx.logs[0].args.context);
         assert.equal(ctx[1], addCtxTx.logs[1].args.context);
-        let removeCtxTx = await didContract.removeContext(did, ctx);
+        let removeCtxTx = await didContract.removeContext(did, ctx, emptySignerPubKey);
         console.log("removeContext gas:", removeCtxTx.receipt.gasUsed);
         allCtx = await didContract.getContext(did);
         // console.log(allCtx);
@@ -134,10 +134,10 @@ contract('DID', (accounts) => {
         let service1 = {serviceId: "111", serviceType: "222", serviceEndpoint: "333"};
         let service2 = {serviceId: "444", serviceType: "555", serviceEndpoint: "666"};
         let addServTx1 = await didContract.addService(did, service1.serviceId, service1.serviceType,
-            service1.serviceEndpoint);
+            service1.serviceEndpoint, emptySignerPubKey);
         console.log("addService gas:", addServTx1.receipt.gasUsed);
         let addServTx2 = await didContract.addService(did, service2.serviceId, service2.serviceType,
-            service2.serviceEndpoint);
+            service2.serviceEndpoint, emptySignerPubKey);
         assert.equal(1, addServTx1.logs.length);
         assert.equal(1, addServTx2.logs.length);
         assert.equal("AddService", addServTx1.logs[0].event);
@@ -148,7 +148,7 @@ contract('DID', (accounts) => {
         assert.equal(2, allServ.length);
         // console.log(allServ);
         let updateServTx = await didContract.updateService(did, service1.serviceId, service2.serviceType,
-            service2.serviceEndpoint);
+            service2.serviceEndpoint, emptySignerPubKey);
         console.log("updateService gas:", updateServTx.receipt.gasUsed);
         assert.equal(1, updateServTx.logs.length);
         let updateEvt = updateServTx.logs[0];
@@ -158,7 +158,7 @@ contract('DID', (accounts) => {
         allServ = await didContract.getAllService(did);
         assert.equal(2, allServ.length);
         // console.log(allServ);
-        let removeServTx1 = await didContract.removeService(did, service1.serviceId);
+        let removeServTx1 = await didContract.removeService(did, service1.serviceId, emptySignerPubKey);
         console.log("removeService gas:", removeServTx1.receipt.gasUsed);
         assert.equal(1, removeServTx1.logs.length);
         let removeEvt = updateServTx.logs[0];
@@ -172,7 +172,7 @@ contract('DID', (accounts) => {
     it('test verify signature', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
-        let verified = await didContract.verifySignature(did);
+        let verified = await didContract.verifySignature(did, emptySignerPubKey);
         assert.ok(verified);
     });
     it('test get document', async () => {
@@ -210,56 +210,56 @@ contract('DID', (accounts) => {
         let didContract = await DIDContractV2.at(instance.address);
         let service1 = {serviceId: "ddd", serviceType: "sss", serviceEndpoint: "aaa"};
         let addServTx1 = await didContract.addService(did, service1.serviceId, service1.serviceType,
-            service1.serviceEndpoint);
+            service1.serviceEndpoint, emptySignerPubKey);
         assert.equal(1, addServTx1.logs.length);
         assert.equal("AddService", addServTx1.logs[0].event);
         assert.equal(service1.serviceEndpoint, addServTx1.logs[0].args.serviceEndpoint);
     });
-    it('test many pub key and auth key', async () => {
-        let instance = await EternalStorageProxy.deployed();
-        let didContract = await DIDContractV2.at(instance.address);
-        let allPubKey = await didContract.getAllPubKey(did);
-        let allAuthPubKey = await didContract.getAllAuthKey(did);
-        let pubKeyBeforeLen = allPubKey.length;
-        let authKeyBeforeLen = allAuthPubKey.length;
-        for (let i = 10; i < 30; i++) {
-            let pubKey = Buffer.from("133fe269d5587d68b344f0075039059f4fbb12a1667fd7968fe" +
-                "018a99de1fe358c70206f08caef079633c281cd10057ef837d07e777a8b7fc9e2e1359082b9" + i, "hex")
-            let tx = await didContract.addKey(did, pubKey, [did], {from: accounts[0]});
-            console.log("addKey gas:", tx.receipt.gasUsed);
-            tx = await didContract.setAuthKey(did, pubKey);
-            console.log("setAuthKey gas:", tx.receipt.gasUsed);
-            console.log("set key:", pubKey.toString('hex'));
-        }
-        // deactivate some auth key
-        let deactivatedAuth = [];
-        for (let i = 10; i < 30; i += Math.ceil(Math.random() * 3)) {
-            let pubKey = Buffer.from("133fe269d5587d68b344f0075039059f4fbb12a1667fd7968fe" +
-                "018a99de1fe358c70206f08caef079633c281cd10057ef837d07e777a8b7fc9e2e1359082b9" + i, "hex")
-            deactivatedAuth.push(pubKey);
-            let tx = await didContract.deactivateAuthKey(did, pubKey);
-            console.log("deactivateAuthKey gas:", tx.receipt.gasUsed);
-            console.log("deactivatedAuth:", pubKey.toString('hex'));
-        }
-        console.log("deactivate num:", deactivatedAuth.length);
-        // re-auth some auth key
-        for (let i = 0; i < deactivatedAuth.length / 2; i++) {
-            let pubKey = deactivatedAuth[i];
-            let tx = await didContract.setAuthKey(did, pubKey);
-            console.log("setAuthKey gas:", tx.receipt.gasUsed);
-            console.log("re-auth:", pubKey.toString('hex'));
-        }
-        allPubKey = await didContract.getAllPubKey(did);
-        allAuthPubKey = await didContract.getAllAuthKey(did);
-        let pubKeyAfterLen = allPubKey.length;
-        let authKeyAfterLen = allAuthPubKey.length;
-        assert.equal(20, pubKeyAfterLen - pubKeyBeforeLen);
-        // assert.equal(20, authKeyAfterLen - authKeyBeforeLen + deactivatedAuth.length / 2);
-        for (let i = 0; i < authKeyAfterLen - 1; i++) {
-            console.log(allAuthPubKey[i + 1].authIndex, ">", allAuthPubKey[i].authIndex);
-            // assert.ok(allAuthPubKey[i + 1].authIndex > allAuthPubKey[i].authIndex);
-        }
-    });
+    // it('test many pub key and auth key', async () => {
+    //     let instance = await EternalStorageProxy.deployed();
+    //     let didContract = await DIDContractV2.at(instance.address);
+    //     let allPubKey = await didContract.getAllPubKey(did);
+    //     let allAuthPubKey = await didContract.getAllAuthKey(did);
+    //     let pubKeyBeforeLen = allPubKey.length;
+    //     let authKeyBeforeLen = allAuthPubKey.length;
+    //     for (let i = 10; i < 30; i++) {
+    //         let pubKey = Buffer.from("133fe269d5587d68b344f0075039059f4fbb12a1667fd7968fe" +
+    //             "018a99de1fe358c70206f08caef079633c281cd10057ef837d07e777a8b7fc9e2e1359082b9" + i, "hex")
+    //         let tx = await didContract.addKey(did, pubKey, [did], emptySignerPubKey, {from: accounts[0]});
+    //         console.log("addKey gas:", tx.receipt.gasUsed);
+    //         tx = await didContract.setAuthKey(did, pubKey, emptySignerPubKey);
+    //         console.log("setAuthKey gas:", tx.receipt.gasUsed);
+    //         console.log("set key:", pubKey.toString('hex'));
+    //     }
+    //     // deactivate some auth key
+    //     let deactivatedAuth = [];
+    //     for (let i = 10; i < 30; i += Math.ceil(Math.random() * 3)) {
+    //         let pubKey = Buffer.from("133fe269d5587d68b344f0075039059f4fbb12a1667fd7968fe" +
+    //             "018a99de1fe358c70206f08caef079633c281cd10057ef837d07e777a8b7fc9e2e1359082b9" + i, "hex")
+    //         deactivatedAuth.push(pubKey);
+    //         let tx = await didContract.deactivateAuthKey(did, pubKey, emptySignerPubKey);
+    //         console.log("deactivateAuthKey gas:", tx.receipt.gasUsed);
+    //         console.log("deactivatedAuth:", pubKey.toString('hex'));
+    //     }
+    //     console.log("deactivate num:", deactivatedAuth.length);
+    //     // re-auth some auth key
+    //     for (let i = 0; i < deactivatedAuth.length / 2; i++) {
+    //         let pubKey = deactivatedAuth[i];
+    //         let tx = await didContract.setAuthKey(did, pubKey, emptySignerPubKey);
+    //         console.log("setAuthKey gas:", tx.receipt.gasUsed);
+    //         console.log("re-auth:", pubKey.toString('hex'));
+    //     }
+    //     allPubKey = await didContract.getAllPubKey(did);
+    //     allAuthPubKey = await didContract.getAllAuthKey(did);
+    //     let pubKeyAfterLen = allPubKey.length;
+    //     let authKeyAfterLen = allAuthPubKey.length;
+    //     assert.equal(20, pubKeyAfterLen - pubKeyBeforeLen);
+    //     // assert.equal(20, authKeyAfterLen - authKeyBeforeLen + deactivatedAuth.length / 2);
+    //     for (let i = 0; i < authKeyAfterLen - 1; i++) {
+    //         console.log(allAuthPubKey[i + 1].authIndex, ">", allAuthPubKey[i].authIndex);
+    //         // assert.ok(allAuthPubKey[i + 1].authIndex > allAuthPubKey[i].authIndex);
+    //     }
+    // });
     it('test deactivate key', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContractV2.at(instance.address);
@@ -269,7 +269,7 @@ contract('DID', (accounts) => {
             if (pubKey.pubKey.length <= 2) {
                 continue;
             }
-            let tx = await didContract.deactivateKey(did, pubKey.pubKey, {from: accounts[2]});
+            let tx = await didContract.deactivateKey(did, pubKey.pubKey, emptySignerPubKey, {from: accounts[0]});
             assert.equal(1, tx.logs.length);
             // console.log(tx.logs[0].did, "deactivate", tx.logs[0].pubKey);
             console.log("deactivateKey gas:", tx.receipt.gasUsed);
@@ -282,7 +282,7 @@ contract('DID', (accounts) => {
     it('test addAddr and setAuthAddr', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContractV2.at(instance.address);
-        let tx = await didContract.addAddr(did, accounts[1], [did], {from: accounts[0]});
+        let tx = await didContract.addAddr(did, accounts[1], [did], emptySignerPubKey, {from: accounts[0]});
         console.log('addAddr gas:', tx.receipt.gasUsed);
         assert.equal(tx.logs.length, 1);
         assert.equal(tx.logs[0].event, "AddAddr");
@@ -291,7 +291,7 @@ contract('DID', (accounts) => {
         assert.equal(allPubKey[1].ethAddr.toLowerCase(), accounts[1].toLowerCase());
         assert.equal(allPubKey[1].keyType, "EcdsaSecp256k1RecoveryMethod2020");
 
-        tx = await didContract.setAuthAddr(did, accounts[1], {from: accounts[0]});
+        tx = await didContract.setAuthAddr(did, accounts[1], emptySignerPubKey, {from: accounts[0]});
         console.log('setAuthAddr gas:', tx.receipt.gasUsed);
         assert.equal(tx.logs.length, 1);
         assert.equal(tx.logs[0].event, "SetAuthAddr");
@@ -301,14 +301,14 @@ contract('DID', (accounts) => {
     it('test deactivate auth addr and deactivate addr', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContractV2.at(instance.address);
-        let tx = await didContract.deactivateAuthAddr(did, accounts[1], {from: accounts[0]});
+        let tx = await didContract.deactivateAuthAddr(did, accounts[1], emptySignerPubKey, {from: accounts[0]});
         console.log('deactivateAuthAddr gas:', tx.receipt.gasUsed);
         assert.equal(tx.logs.length, 1);
         assert.equal(tx.logs[0].event, "DeactivateAuthAddr");
         let allAuthPubKey = await didContract.getAllAuthKey(did);
         assert.equal(allAuthPubKey.length, 2);
 
-        tx = await didContract.deactivateAddr(did, accounts[1], {from: accounts[0]});
+        tx = await didContract.deactivateAddr(did, accounts[1], emptySignerPubKey, {from: accounts[0]});
         console.log('deactivateAddr gas:', tx.receipt.gasUsed);
         assert.equal(tx.logs.length, 1);
         assert.equal(tx.logs[0].event, "DeactivateAddr");
@@ -318,14 +318,14 @@ contract('DID', (accounts) => {
     it('test new auth addr', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContractV2.at(instance.address);
-        let tx = await didContract.addNewAuthAddr(did, accounts[5], [did], {from: accounts[0]});
+        let tx = await didContract.addNewAuthAddr(did, accounts[5], [did], emptySignerPubKey, {from: accounts[0]});
         console.log('addNewAuthAddr gas:', tx.receipt.gasUsed);
         assert.equal(tx.logs.length, 1);
         assert.equal(tx.logs[0].event, "AddNewAuthAddr");
         let allAuthPubKey = await didContract.getAllAuthKey(did);
         assert.equal(allAuthPubKey.length, 3);
 
-        tx = await didContract.deactivateAuthAddr(did, accounts[5], {from: accounts[0]});
+        tx = await didContract.deactivateAuthAddr(did, accounts[5], emptySignerPubKey, {from: accounts[0]});
         console.log('deactivateAuthAddr gas:', tx.receipt.gasUsed);
         assert.equal(tx.logs.length, 1);
         assert.equal(tx.logs[0].event, "DeactivateAuthAddr");
@@ -335,7 +335,7 @@ contract('DID', (accounts) => {
     it('deactivate did', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContractV2.at(instance.address);
-        let tx = await didContract.deactivateID(did, {from: accounts[2]});
+        let tx = await didContract.deactivateID(did, newAuthKey, {from: accounts[2]});
         assert.equal(1, tx.logs.length);
         assert.equal("Deactivate", tx.logs[0].event);
         assert.equal(did.toLowerCase(), tx.logs[0].args.did.toLowerCase());
