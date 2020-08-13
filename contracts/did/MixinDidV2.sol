@@ -63,31 +63,13 @@ contract DIDContractV2 is MixinDidStorage, IDid {
     * it means public key of msg.sender must be one of did authentication
     */
     modifier requireDIDSign(string memory did) {
-        require(verifyDIDSignature(did), "verify did signature failed");
+        require(verifySignature(did), "verify did signature failed");
         _;
     }
 
     modifier requireDIDControllerSign(string memory did, string memory controller){
         require(verifyController(did, controller), "verify did controller signature failed");
         _;
-    }
-
-    /**
-   * @dev verify there is one did authentication key sign this transaction
-   * @param did did
-   */
-    function verifyDIDSignature(string memory did) private view returns (bool) {
-        StorageUtils.PublicKey[] memory allAuthKey = getAllAuthKey(did);
-        for (uint i = 0; i < allAuthKey.length; i++) {
-            if (allAuthKey[i].ethAddr == msg.sender) {
-                return true;
-            }
-            if (allAuthKey[i].pubKey.length > 0 &&
-                DidUtils.pubKeyToAddr(allAuthKey[i].pubKey) == msg.sender) {
-                return true;
-            }
-        }
-        return false;
     }
 
     constructor() public {
@@ -561,10 +543,21 @@ contract DIDContractV2 is MixinDidStorage, IDid {
     function verifySignature(string memory did)
     public view returns (bool)
     {
-        if (didStatus[BytesUtils.toLower(did)].deactivated) {
+        did = BytesUtils.toLower(did);
+        if (didStatus[did].deactivated) {
             return false;
         }
-        return verifyDIDSignature(did);
+        StorageUtils.PublicKey[] memory allAuthKey = getAllAuthKey(did);
+        for (uint i = 0; i < allAuthKey.length; i++) {
+            if (allAuthKey[i].ethAddr == msg.sender) {
+                return true;
+            }
+            if (allAuthKey[i].pubKey.length > 0 &&
+                DidUtils.pubKeyToAddr(allAuthKey[i].pubKey) == msg.sender) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -574,7 +567,8 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function verifyController(string memory did, string memory controller)
     public view returns (bool){
-        if (didStatus[BytesUtils.toLower(did)].deactivated) {
+        did = BytesUtils.toLower(did);
+        if (didStatus[did].deactivated) {
             return false;
         }
         string memory controllerKey = KeyUtils.genControllerKey(did);
@@ -582,7 +576,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
         if (!data[controllerKey].contains(key)) {
             return false;
         }
-        return verifyDIDSignature(controller);
+        return verifySignature(controller);
     }
 
     /**
