@@ -157,14 +157,66 @@ library StorageUtils {
         return result;
     }
 
+    function insertNewPubKey(IterableMapping.itmap storage pubKeyList, PublicKey memory pub)
+    internal {
+        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pub.pubKey, pub.ethAddr);
+        bytes memory encodedPubKey = serializePubKey(pub);
+        bool replaced = pubKeyList.insert(pubKeyListSecondKey, encodedPubKey);
+        require(!replaced, "key already existed");
+    }
+
+    function authPubKey(IterableMapping.itmap storage pubKeyList, bytes memory pubKey,
+        address addr, uint authIndex)
+    internal {
+        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey, addr);
+        bytes memory pubKeyData = pubKeyList.data[pubKeyListSecondKey].value;
+        require(pubKeyData.length > 0, "key is not existed");
+        PublicKey memory key = deserializePubKey(pubKeyData);
+        require(!key.deactivated, "key is deactivated");
+        require(!key.isAuth, "key is authenticated");
+        key.isAuth = true;
+        key.authIndex = authIndex;
+        bytes memory encodedPubKey = serializePubKey(key);
+        pubKeyList.insert(pubKeyListSecondKey, encodedPubKey);
+    }
+
+    function deactivatePubKey(IterableMapping.itmap storage pubKeyList, bytes memory pubKey,
+        address addr)
+    internal {
+        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey, addr);
+        bytes memory pubKeyData = pubKeyList.data[pubKeyListSecondKey].value;
+        require(pubKeyData.length > 0, "key is not existed");
+        PublicKey memory key = deserializePubKey(pubKeyData);
+        require(!key.deactivated, "key is deactivated");
+        key.isPubKey = false;
+        key.isAuth = false;
+        key.deactivated = true;
+        key.authIndex = 0;
+        bytes memory encodedPubKey = serializePubKey(key);
+        pubKeyList.insert(pubKeyListSecondKey, encodedPubKey);
+    }
+
+    function deAuthPubKey(IterableMapping.itmap storage pubKeyList, bytes memory pubKey, address addr)
+    internal {
+        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(pubKey, addr);
+        bytes memory pubKeyData = pubKeyList.data[pubKeyListSecondKey].value;
+        require(pubKeyData.length > 0, "key is not existed");
+        PublicKey memory key = deserializePubKey(pubKeyData);
+        require(!key.deactivated, "key is deactivated");
+        require(key.isAuth, "key has already not authenticated");
+        key.isAuth = false;
+        key.authIndex = 0;
+        bytes memory encodedPubKey = serializePubKey(key);
+        pubKeyList.insert(pubKeyListSecondKey, encodedPubKey);
+    }
     /**
    * @dev query context list
    * @param ctxList context list
    */
-    function getContext(IterableMapping.itmap storage ctxList) public view returns (string[] memory) {
+    function getContext(IterableMapping.itmap storage ctxList, string memory defaultCtx) public view returns (string[] memory) {
         string[] memory result = new string[](ctxList.size + 1);
         // add default context
-        result[0] = "https://www.w3.org/ns/did/v1";
+        result[0] = defaultCtx;
         uint count = 1;
         for (
             uint i = ctxList.iterate_start();

@@ -7,7 +7,6 @@ import "./BytesUtils.sol";
 library KeyUtils {
 
     function genContextKey(string memory did) public pure returns (string memory){
-        did = BytesUtils.toLower(did);
         return string(abi.encodePacked(did, "@context"));
     }
 
@@ -16,7 +15,6 @@ library KeyUtils {
     }
 
     function genPubKeyListKey(string memory did) public pure returns (string memory){
-        did = BytesUtils.toLower(did);
         return string(abi.encodePacked(did, "publicKey"));
     }
 
@@ -31,7 +29,6 @@ library KeyUtils {
     }
 
     function genControllerKey(string memory did) public pure returns (string memory) {
-        did = BytesUtils.toLower(did);
         return string(abi.encodePacked(did, "controller"));
     }
 
@@ -40,7 +37,6 @@ library KeyUtils {
     }
 
     function genServiceKey(string memory did) public pure returns (string memory) {
-        did = BytesUtils.toLower(did);
         return string(abi.encodePacked(did, "service"));
     }
 
@@ -49,7 +45,6 @@ library KeyUtils {
     }
 
     function genUpdateTimeKey(string memory did) public pure returns (string memory) {
-        did = BytesUtils.toLower(did);
         return string(abi.encodePacked(did, "updateTime"));
     }
 
