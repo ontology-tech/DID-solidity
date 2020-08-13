@@ -62,13 +62,13 @@ contract DIDContract is MixinDidStorage, IDid {
     * @dev require msg.sender must be did,
     * it means public key of msg.sender must be one of did authentication
     */
-    modifier requireDIDSign(string memory did) {
-        require(verifySignature(did), "verify did signature failed");
+    modifier requireDIDSign(string memory did, bytes memory signerPubKey) {
+        require(verifySignature(did, signerPubKey), "verify did signature failed");
         _;
     }
 
-    modifier requireDIDControllerSign(string memory did, string memory controller){
-        require(verifyController(did, controller), "verify did controller signature failed");
+    modifier requireDIDControllerSign(string memory did, string memory controller, bytes memory signerPubKey){
+        require(verifyController(did, controller, signerPubKey), "verify did controller signature failed");
         _;
     }
 
@@ -81,8 +81,8 @@ contract DIDContract is MixinDidStorage, IDid {
    *    it means this did cannot been registered in the future
    * @param did did
    */
-    function deactivateID(string memory did)
-    requireDIDSign(did) didActivated(did)
+    function deactivateID(string memory did, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey) didActivated(did)
     override public {
         // delete context
         delete data[KeyUtils.genContextKey(did)];
@@ -107,8 +107,9 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param newPubKey new public key
    * @param controller controller of newPubKey, they are some did
    */
-    function addKey(string memory did, bytes memory newPubKey, string[] memory controller)
-    requireDIDSign(did) verifyMultiDIDFormat(controller)
+    function addKey(string memory did, bytes memory newPubKey, string[] memory controller,
+        bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey) verifyMultiDIDFormat(controller)
     override public {
         addNewPubKey(did, newPubKey, address(0), "EcdsaSecp256k1VerificationKey2019", controller, true, 0);
         emit AddKey(did, newPubKey, controller);
@@ -120,8 +121,8 @@ contract DIDContract is MixinDidStorage, IDid {
     * @param addr new address
     * @param controller controller of newPubKey, they are some did
     */
-    function addAddr(string memory did, address addr, string[] memory controller)
-    requireDIDSign(did) verifyMultiDIDFormat(controller) notSelfAddr(did, addr)
+    function addAddr(string memory did, address addr, string[] memory controller, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey) verifyMultiDIDFormat(controller) notSelfAddr(did, addr)
     override public {
         bytes memory emptyPubKey = new bytes(0);
         addNewPubKey(did, emptyPubKey, addr, "EcdsaSecp256k1RecoveryMethod2020", controller, true, 0);
@@ -134,8 +135,9 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param pubKey the new public key
    * @param controller controller of newPubKey, they are some did
    */
-    function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller)
-    requireDIDSign(did) verifyMultiDIDFormat(controller)
+    function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller,
+        bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey) verifyMultiDIDFormat(controller)
     override public {
         addNewPubKey(did, pubKey, address(0), "EcdsaSecp256k1VerificationKey2019", controller,
             false, fetchAuthIndex(did));
@@ -148,8 +150,9 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param addr the new address
    * @param controller controller of newPubKey, they are some did
    */
-    function addNewAuthAddr(string memory did, address addr, string[] memory controller)
-    requireDIDSign(did) verifyMultiDIDFormat(controller) notSelfAddr(did, addr)
+    function addNewAuthAddr(string memory did, address addr, string[] memory controller,
+        bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey) verifyMultiDIDFormat(controller) notSelfAddr(did, addr)
     override public {
         bytes memory emptyPubKey = new bytes(0);
         uint authIndex = fetchAuthIndex(did);
@@ -165,8 +168,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param controllerSigner tx signer should be one of did controller
    */
     function addNewAuthKeyByController(string memory did, bytes memory pubKey, string[] memory controller,
-        string memory controllerSigner)
-    requireDIDControllerSign(did, controllerSigner) verifyMultiDIDFormat(controller)
+        string memory controllerSigner, bytes memory signerPubKey)
+    requireDIDControllerSign(did, controllerSigner, signerPubKey) verifyMultiDIDFormat(controller)
     override public {
         addNewPubKey(did, pubKey, address(0), "EcdsaSecp256k1VerificationKey2019", controller,
             false, fetchAuthIndex(did));
@@ -181,8 +184,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param controllerSigner tx signer should be one of did controller
    */
     function addNewAuthAddrByController(string memory did, address addr, string[] memory controller,
-        string memory controllerSigner)
-    requireDIDControllerSign(did, controllerSigner) verifyMultiDIDFormat(controller) notSelfAddr(did, addr)
+        string memory controllerSigner, bytes memory signerPubKey)
+    requireDIDControllerSign(did, controllerSigner, signerPubKey) verifyMultiDIDFormat(controller) notSelfAddr(did, addr)
     override public {
         bytes memory emptyPubKey = new bytes(0);
         uint authIndex = fetchAuthIndex(did);
@@ -212,8 +215,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param pubKey public key
    */
-    function setAuthKey(string memory did, bytes memory pubKey)
-    requireDIDSign(did)
+    function setAuthKey(string memory did, bytes memory pubKey, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey)
     override public {
         authPubKey(did, pubKey, address(0));
         emit SetAuthKey(did, pubKey);
@@ -224,8 +227,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param addr address
    */
-    function setAuthAddr(string memory did, address addr)
-    requireDIDSign(did)
+    function setAuthAddr(string memory did, address addr, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey)
     override public {
         bytes memory pubKey = new bytes(0);
         authPubKey(did, pubKey, addr);
@@ -238,8 +241,9 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param pubKey public key
    * @param controller one of did controller
    */
-    function setAuthKeyByController(string memory did, bytes memory pubKey, string memory controller)
-    requireDIDControllerSign(did, controller)
+    function setAuthKeyByController(string memory did, bytes memory pubKey, string memory controller,
+        bytes memory signerPubKey)
+    requireDIDControllerSign(did, controller, signerPubKey)
     override public {
         authPubKey(did, pubKey, address(0));
         emit SetAuthKey(did, pubKey);
@@ -251,8 +255,9 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param addr address
    * @param controller one of did controller
    */
-    function setAuthAddrByController(string memory did, address addr, string memory controller)
-    requireDIDControllerSign(did, controller)
+    function setAuthAddrByController(string memory did, address addr, string memory controller,
+        bytes memory signerPubKey)
+    requireDIDControllerSign(did, controller, signerPubKey)
     override public {
         bytes memory pubKey = new bytes(0);
         authPubKey(did, pubKey, addr);
@@ -287,8 +292,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param pubKey public key
    */
-    function deactivateKey(string memory did, bytes memory pubKey)
-    requireDIDSign(did)
+    function deactivateKey(string memory did, bytes memory pubKey, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey)
     override public {
         deactivatePubKey(did, pubKey, address(0));
         emit DeactivateKey(did, pubKey);
@@ -299,8 +304,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param addr address
    */
-    function deactivateAddr(string memory did, address addr)
-    requireDIDSign(did)
+    function deactivateAddr(string memory did, address addr, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey)
     override public {
         bytes memory emptyPubKey = new bytes(0);
         deactivatePubKey(did, emptyPubKey, addr);
@@ -329,8 +334,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param pubKey public key
    */
-    function deactivateAuthKey(string memory did, bytes memory pubKey)
-    requireDIDSign(did)
+    function deactivateAuthKey(string memory did, bytes memory pubKey, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey)
     override public {
         deAuthPubKey(did, pubKey, address(0));
         emit DeactivateAuthKey(did, pubKey);
@@ -341,8 +346,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param addr address
    */
-    function deactivateAuthAddr(string memory did, address addr)
-    requireDIDSign(did)
+    function deactivateAuthAddr(string memory did, address addr, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey)
     override public {
         bytes memory pubKey = new bytes(0);
         deAuthPubKey(did, pubKey, addr);
@@ -355,8 +360,9 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param pubKey public key
    * @param controller one of did controller
    */
-    function deactivateAuthKeyByController(string memory did, bytes memory pubKey, string memory controller)
-    requireDIDControllerSign(did, controller)
+    function deactivateAuthKeyByController(string memory did, bytes memory pubKey, string memory controller,
+        bytes memory signerPubKey)
+    requireDIDControllerSign(did, controller, signerPubKey)
     override public {
         deAuthPubKey(did, pubKey, address(0));
         emit DeactivateAuthKey(did, pubKey);
@@ -368,8 +374,9 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param addr address
    * @param controller one of did controller
    */
-    function deactivateAuthAddrByController(string memory did, address addr, string memory controller)
-    requireDIDControllerSign(did, controller)
+    function deactivateAuthAddrByController(string memory did, address addr, string memory controller,
+        bytes memory signerPubKey)
+    requireDIDControllerSign(did, controller, signerPubKey)
     override public {
         bytes memory pubKey = new bytes(0);
         deAuthPubKey(did, pubKey, addr);
@@ -401,8 +408,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param contexts contexts
    */
-    function addContext(string memory did, string[] memory contexts)
-    requireDIDSign(did)
+    function addContext(string memory did, string[] memory contexts, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey)
     override public {
         string memory ctxKey = KeyUtils.genContextKey(did);
         for (uint i = 0; i < contexts.length; i++) {
@@ -421,8 +428,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param contexts contexts
    */
-    function removeContext(string memory did, string[] memory contexts)
-    requireDIDSign(did)
+    function removeContext(string memory did, string[] memory contexts, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey)
     override public {
         string memory ctxKey = KeyUtils.genContextKey(did);
         for (uint i = 0; i < contexts.length; i++) {
@@ -441,8 +448,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param controller one of did controller
    */
-    function addController(string memory did, string memory controller)
-    requireDIDSign(did)
+    function addController(string memory did, string memory controller, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey)
     override public {
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
@@ -457,8 +464,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param controller one of did controller
    */
-    function removeController(string memory did, string memory controller)
-    requireDIDSign(did)
+    function removeController(string memory did, string memory controller, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey)
     override public {
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
@@ -476,8 +483,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param serviceEndpoint service endpoint
    */
     function addService(string memory did, string memory serviceId, string memory serviceType,
-        string memory serviceEndpoint)
-    requireDIDSign(did)
+        string memory serviceEndpoint, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey)
     override public {
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
@@ -497,8 +504,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param serviceEndpoint service endpoint
    */
     function updateService(string memory did, string memory serviceId, string memory serviceType,
-        string memory serviceEndpoint)
-    requireDIDSign(did)
+        string memory serviceEndpoint, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey)
     override public {
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
@@ -515,8 +522,8 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param serviceId service id
    */
-    function removeService(string memory did, string memory serviceId)
-    requireDIDSign(did)
+    function removeService(string memory did, string memory serviceId, bytes memory signerPubKey)
+    requireDIDSign(did, signerPubKey)
     override public {
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
@@ -540,24 +547,24 @@ contract DIDContract is MixinDidStorage, IDid {
    * @dev verify tx has signed by did
    * @param did did
    */
-    function verifySignature(string memory did)
+    function verifySignature(string memory did, bytes memory signerPubKey)
     public view returns (bool)
     {
         did = BytesUtils.toLower(did);
         if (didStatus[did].deactivated) {
             return false;
         }
-        StorageUtils.PublicKey[] memory allAuthKey = getAllAuthKey(did);
-        for (uint i = 0; i < allAuthKey.length; i++) {
-            if (allAuthKey[i].ethAddr == msg.sender) {
-                return true;
-            }
-            if (allAuthKey[i].pubKey.length > 0 &&
-                DidUtils.pubKeyToAddr(allAuthKey[i].pubKey) == msg.sender) {
-                return true;
-            }
+        if (signerPubKey.length > 0) {
+            address signer = DidUtils.pubKeyToAddr(signerPubKey);
+            require(signer == msg.sender || signer == tx.origin, "signer invalid");
         }
-        return false;
+        string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
+        bytes32 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(signerPubKey, msg.sender);
+        // if signerPubKey.length > 0, verify signerPubKey is listed in self public key list and authenticated
+        // else verify msg.sender is listed in self public key list and authenticated
+        StorageUtils.PublicKey memory pub =
+        StorageUtils.deserializePubKey(data[pubKeyListKey].data[pubKeyListSecondKey].value);
+        return !pub.deactivated && pub.isAuth;
     }
 
     /**
@@ -565,7 +572,7 @@ contract DIDContract is MixinDidStorage, IDid {
    * @param did did
    * @param controller one of did controller
    */
-    function verifyController(string memory did, string memory controller)
+    function verifyController(string memory did, string memory controller, bytes memory signerPubKey)
     public view returns (bool){
         did = BytesUtils.toLower(did);
         if (didStatus[did].deactivated) {
@@ -576,7 +583,7 @@ contract DIDContract is MixinDidStorage, IDid {
         if (!data[controllerKey].contains(key)) {
             return false;
         }
-        return verifySignature(controller);
+        return verifySignature(controller, signerPubKey);
     }
 
     /**
