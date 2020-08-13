@@ -33,19 +33,33 @@ DIDContract: 0x55DE116e54220a243d2e77cEaC78B5F2B3F7f73c
 
 | name | gas |
 | --- | --- |
-| regIDWithPublicKey |  609393 |
-| addKey |  588628 |
-| setAuthKey |  306040 |
-| deactivateAuthKey |  286482 |
-| addNewAuthKey |  524172 |
-| addContext |  392427 |
-| removeContext |  222770 |
-| addService |  330940 |
-| updateService |  234917 |
-| removeService |  223965 |
-| deactivateKey |  315875 |
-| deactivateID |  213743 |
-| addController |  417299 |
-| addNewAuthKeyByController |  571270 |
-| setAuthKeyByController |  277645 |
-| deactivateAuthKeyByController |  256172 |
+| addKey |  555392 |
+| setAuthKey |  191619 |
+| deactivateAuthKey |  174081 |
+| addNewAuthKey |  415953 |
+| addContext |  295411 |
+| removeContext |  125832 |
+| addService |  238210 |
+| updateService |  138008 |
+| removeService |  127017 |
+| deactivateKey |  174061 |
+| deactivateID |  153470 |
+| addController |  382943 |
+| addNewAuthKeyByController |  580692 |
+| setAuthKeyByController |  271635 |
+| deactivateAuthKeyByController |  269118 |
+|addAddr | 382321 |
+|setAuthAddr | 176123 |
+|deactivateAuthAddr | 165259 |
+|deactivateAddr | 169394 |
+|addNewAuthAddr | 388968 |
+|deactivateAuthAddr | 169481 |
+|addNewAuthAddrByController |  537963 |
+|setAuthAddrByController |  267114 |
+|deactivateAuthAddrByController |  264576 |
+
+## TODO
+
+1. update design and interface document;
+2. add commend to some function;
+3. add more unit test;
