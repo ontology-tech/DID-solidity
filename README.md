@@ -1,4 +1,4 @@
-# DID-Celo-solidity
+# DID-solidity
 
 ## Specification
 
@@ -25,6 +25,7 @@ We offer versions in two language:
 ### alfajores
 
 EternalStorageProxy: 0x0B468C280B95e28953Dec807E33C07C36aC86B0D
+
 DIDContract: 0x37D7bD94bDC0A579e0C92BF7525D4B31D883f96A
 
 ## Gas Consumed

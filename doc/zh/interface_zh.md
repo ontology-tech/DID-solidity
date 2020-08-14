@@ -494,7 +494,6 @@ getDocument
         PublicKey[] authentication;
         string[] controller;
         Service[] service;
-        uint created;
         uint updated;
     }
 ```
@@ -580,18 +579,6 @@ getAllService
         string serviceEndpoint;
     }
 ```
-
-#### 查询创建时间
-
-getCreatedTime
-
-参数：
-
-编号 | 名称 | 类型   | 说明
-----|-----|----|-------
-0  | did | string | 查询的DID
-
-返回：uint
 
 #### 查询更新时间
 
