@@ -1,4 +1,4 @@
-# DID-Ethereum-solidity 接口文档
+# DID-Tron-solidity 接口文档
 
 ### 注销DID
 

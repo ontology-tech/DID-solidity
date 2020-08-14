@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity ^0.6.0;
+pragma solidity 0.5.8;
 
 library IterableMapping {
 
@@ -20,7 +20,7 @@ library IterableMapping {
             return true;
         else {
             keyIndex = self.keys.length;
-            self.keys.push();
+            self.keys.push(KeyFlag(key, false));
             self.data[key].keyIndex = keyIndex + 1;
             self.keys[keyIndex].key = key;
             self.size++;

@@ -11,7 +11,7 @@ const StorageUtils = artifacts.require("StorageUtils");
 
 
 contract('DID', (accounts) => {
-    let did = 'did:etho:' + accounts[0].slice(2).toLowerCase();
+    let did = 'did:trx:' + accounts[0].slice(2).toLowerCase();
     console.log('did:', did);
     let emptySignerPubKey = new Buffer('');
     it('test for default public key', async () => {

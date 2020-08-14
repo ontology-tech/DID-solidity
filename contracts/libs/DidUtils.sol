@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity 0.5.8;
 pragma experimental ABIEncoderV2;
 
 import "./BytesUtils.sol";
 
 library DidUtils {
 
-    // example: did:etho:5Ee76017be7F983a520a778B413758A9DB49cBe9
+    // example: did:trx:5Ee76017be7F983a520a778B413758A9DB49cBe9
     /**
    * @dev verify did format
    * @param did did
    */
     function verifyDIDFormat(string memory did) public pure returns (bool){
         bytes memory didData = bytes(did);
-        if (didData.length != 49) {
+        if (didData.length != 48) {
             return false;
         }
-        bytes memory prefix = bytes("did:etho:");
+        bytes memory prefix = bytes("did:trx:");
         if (!BytesUtils.equal(BytesUtils.slice(didData, 0, prefix.length), prefix)) {
             return false;
         }
@@ -26,7 +26,7 @@ library DidUtils {
     }
 
     function parseAddrFromDID(bytes memory did) public pure returns (address){
-        uint prefixLen = 9;
+        uint prefixLen = 8;
         bytes memory addressBytesData = BytesUtils.slice(did, prefixLen, did.length - prefixLen);
         bytes memory addressBytes = BytesUtils.fromHex(string(addressBytesData));
         return BytesUtils.bytesToAddress(addressBytes);

@@ -1,8 +1,8 @@
-# DID-Ethereum-solidity
+# DID-Tron-solidity
 
 ## Specification
 
-[Spec](doc/en/DID-spec-ethereum.md)
+[Spec](doc/en/DID-spec-tron.md)
 
 ## Design and Interface Document
 
@@ -61,3 +61,4 @@ DIDContract: 0x55DE116e54220a243d2e77cEaC78B5F2B3F7f73c
 ## TODO
 
 1. add more unit test;
+2. update spec;

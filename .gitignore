@@ -1,6 +1,6 @@
 .idea
 build/
-tests/account.dat
+test/account.dat
 node_modules
 .secret
 package.json

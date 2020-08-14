@@ -1,20 +1,18 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity >=0.6.0 <0.7.0;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.5.8;
 
-
-abstract contract Proxy {
+contract Proxy {
     /**
    * @dev Tells the address of the implementation where every call will be delegated.
    * @return address of the implementation to which it will be delegated
    */
-    function implementation() virtual public view returns (address);
+    function implementation() public view returns (address);
 
     /**
     * @dev Fallback function allowing to perform a delegatecall to the given implementation.
     * This function will return whatever the implementation call returns
     */
-    fallback() payable external {
+    function() payable external {
         address _impl = implementation();
         require(_impl != address(0));
 

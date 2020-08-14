@@ -1,4 +1,4 @@
-# DID-Ethereum-solidity Interface Document
+# DID-Tron-solidity Interface Document
 
 ### Deactivate DID
 

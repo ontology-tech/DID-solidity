@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity 0.5.8;
 
 /**
  * @title UpgradeabilityStorage
  * @dev This contract holds all the necessary state variables to support the upgrade functionality
  */
-abstract contract UpgradeabilityStorage {
+contract UpgradeabilityStorage {
     // Version name of the current implementation
     string internal _version;
 
@@ -24,5 +24,5 @@ abstract contract UpgradeabilityStorage {
     * @dev Tells the address of the current implementation
     * @return address of the current implementation
     */
-    function implementation() virtual public view returns (address);
+    function implementation() public view returns (address);
 }

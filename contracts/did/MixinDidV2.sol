@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity 0.5.8;
 pragma experimental ABIEncoderV2;
 
 import "../interface/IDid.sol";
@@ -28,7 +28,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param singer tx signer, could be public key or address
    */
     function deactivateID(string memory did, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         // delete context
         delete data[KeyUtils.genContextKey(did)];
@@ -55,7 +55,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function addKey(string memory did, bytes memory newPubKey, string[] memory controller,
         bytes memory singer)
-    override public {
+     public {
         did = checkWhenAddKey(did, singer, controller);
         addNewPubKey(did, newPubKey, address(0), "EcdsaSecp256k1VerificationKey2019", controller, true, false);
         emit AddKey(did, newPubKey, controller);
@@ -69,7 +69,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param singer tx signer, could be public key or address
     */
     function addAddr(string memory did, address addr, string[] memory controller, bytes memory singer)
-    override public {
+     public {
         did = checkWhenAddKey(did, singer, controller);
         addNewPubKey(did, new bytes(0), addr, "EcdsaSecp256k1RecoveryMethod2020", controller, true, false);
         emit AddAddr(did, addr, controller);
@@ -84,7 +84,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller,
         bytes memory singer)
-    override public {
+     public {
         did = checkWhenAddKey(did, singer, controller);
         addNewPubKey(did, pubKey, address(0), "EcdsaSecp256k1VerificationKey2019", controller,
             false, true);
@@ -100,7 +100,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function addNewAuthAddr(string memory did, address addr, string[] memory controller,
         bytes memory singer)
-    override public {
+     public {
         did = checkWhenAddKey(did, singer, controller);
         addNewPubKey(did, new bytes(0), addr, "EcdsaSecp256k1RecoveryMethod2020", controller, false, true);
         emit AddNewAuthAddr(did, addr, controller);
@@ -116,7 +116,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function addNewAuthKeyByController(string memory did, bytes memory pubKey, string[] memory controller,
         string memory controllerSigner, bytes memory singer)
-    override public {
+     public {
         did = checkWhenAddKeyByController(did, singer, controllerSigner, controller);
         addNewPubKey(did, pubKey, address(0), "EcdsaSecp256k1VerificationKey2019", controller,
             false, true);
@@ -133,7 +133,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function addNewAuthAddrByController(string memory did, address addr, string[] memory controller,
         string memory controllerSigner, bytes memory singer)
-    override public {
+     public {
         did = checkWhenAddKeyByController(did, singer, controllerSigner, controller);
         addNewPubKey(did, new bytes(0), addr, "EcdsaSecp256k1RecoveryMethod2020", controller, false, true);
         emit AddNewAuthAddr(did, addr, controller);
@@ -160,7 +160,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param singer tx signer, could be public key or address
    */
     function setAuthKey(string memory did, bytes memory pubKey, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         authPubKey(did, pubKey, address(0));
         emit SetAuthKey(did, pubKey);
@@ -173,7 +173,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param singer tx signer, could be public key or address
    */
     function setAuthAddr(string memory did, address addr, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         authPubKey(did, new bytes(0), addr);
         emit SetAuthAddr(did, addr);
@@ -188,7 +188,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function setAuthKeyByController(string memory did, bytes memory pubKey, string memory controller,
         bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperateByController(did, controller, singer);
         authPubKey(did, pubKey, address(0));
         emit SetAuthKey(did, pubKey);
@@ -203,7 +203,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function setAuthAddrByController(string memory did, address addr, string memory controller,
         bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperateByController(did, controller, singer);
         authPubKey(did, new bytes(0), addr);
         emit SetAuthAddr(did, addr);
@@ -229,7 +229,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param singer tx signer, could be public key or address
    */
     function deactivateKey(string memory did, bytes memory pubKey, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         deactivatePubKey(did, pubKey, address(0));
         emit DeactivateKey(did, pubKey);
@@ -242,7 +242,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param singer tx signer, could be public key or address
    */
     function deactivateAddr(string memory did, address addr, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         deactivatePubKey(did, new bytes(0), addr);
         emit DeactivateAddr(did, addr);
@@ -262,7 +262,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param singer tx signer, could be public key or address
    */
     function deactivateAuthKey(string memory did, bytes memory pubKey, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         deAuthPubKey(did, pubKey, address(0));
         emit DeactivateAuthKey(did, pubKey);
@@ -275,7 +275,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param singer tx signer, could be public key or address
    */
     function deactivateAuthAddr(string memory did, address addr, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         deAuthPubKey(did, new bytes(0), addr);
         emit DeactivateAuthAddr(did, addr);
@@ -290,7 +290,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function deactivateAuthKeyByController(string memory did, bytes memory pubKey, string memory controller,
         bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperateByController(did, controller, singer);
         deAuthPubKey(did, pubKey, address(0));
         emit DeactivateAuthKey(did, pubKey);
@@ -305,7 +305,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function deactivateAuthAddrByController(string memory did, address addr, string memory controller,
         bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperateByController(did, controller, singer);
         deAuthPubKey(did, new bytes(0), addr);
         emit DeactivateAuthAddr(did, addr);
@@ -333,7 +333,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param singer tx signer, could be public key or address
    */
     function addContext(string memory did, string[] memory contexts, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         string memory ctxKey = KeyUtils.genContextKey(did);
         for (uint i = 0; i < contexts.length; i++) {
@@ -354,7 +354,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param singer tx signer, could be public key or address
    */
     function removeContext(string memory did, string[] memory contexts, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         string memory ctxKey = KeyUtils.genContextKey(did);
         for (uint i = 0; i < contexts.length; i++) {
@@ -375,7 +375,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param singer tx signer, could be public key or address
    */
     function addController(string memory did, string memory controller, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
@@ -392,7 +392,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param singer tx signer, could be public key or address
    */
     function removeController(string memory did, string memory controller, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         string memory controllerKey = KeyUtils.genControllerKey(did);
         bytes32 key = KeyUtils.genControllerSecondKey(controller);
@@ -412,7 +412,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function addService(string memory did, string memory serviceId, string memory serviceType,
         string memory serviceEndpoint, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
@@ -434,7 +434,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    */
     function updateService(string memory did, string memory serviceId, string memory serviceType,
         string memory serviceEndpoint, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(serviceId);
@@ -453,7 +453,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param singer tx signer, could be public key or address
    */
     function removeService(string memory did, string memory serviceId, bytes memory singer)
-    override public {
+     public {
         did = checkWhenOperate(did, singer);
         string memory serviceKey = KeyUtils.genServiceKey(did);
         bytes32 key = KeyUtils.genServiceSecondKey(serviceId);

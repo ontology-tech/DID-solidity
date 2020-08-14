@@ -1,4 +1,4 @@
-# DID-Ethereum-solidity Design Document
+# DID-Tron-solidity Design Document
 
 ## DID Document
 

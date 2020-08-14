@@ -4,9 +4,9 @@ const DIDContract = artifacts.require("DIDContract");
 
 contract('DID', (accounts) => {
     // generate different did at every test
-    let did = 'did:etho:' + accounts[0].slice(2).toLowerCase();
+    let did = 'did:trx:' + accounts[0].slice(2).toLowerCase();
     console.log('did:', did);
-    let controller = 'did:etho:' + accounts[1].slice(2).toLowerCase();
+    let controller = 'did:trx:' + accounts[1].slice(2).toLowerCase();
     console.log('controller:', controller);
     let emptySignerPubKey = new Buffer('');
     let privKey = Buffer.from("436f5568bf64ccfb273da130d4a04f87f7f86d55fd5eae49da771ad2ea79cc8f", 'hex');
