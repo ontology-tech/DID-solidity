@@ -33,7 +33,7 @@ did:klay:f269E60fF7280e3E11b7EEd7B76b5C005105D121
 
 ## Klaytn DID Registration and Deactivation
 
-Klaytn DID **MUST** be registered on the Klaytn blockchain to be activated, and the same Klaytn DID **MUST NOT** be registered more than once.
+Kalytn DID can be automatically generated without registration for each Kalytn address.
 
 When a Klaytn DID is deactivated, all the related data including public keys, controllers, and other properties will be deleted and only a record of the Klaytn DID identifier will remain on the Klaytn blockchain.
 
@@ -53,7 +53,6 @@ Below is the basic structure of the Klaytn DID Document:
   "authentication": [...],
   "controller": [...],
   "service": [...],
-  "created": "...",
   "updated": "..."
 }
 ```
@@ -200,17 +199,7 @@ Below is a specific example:
 
 ### Created
 
-Klaytn DID Documents **SHOULD** include a `created` property to specify the time of creation.
-
-This part is derived directly from [W3C DIDs specification](https://www.w3.org/TR/did-core/#created).
-
-Below is a specific example:
-
-```json
-{
-  "created": "2018-06-30T12:00:00Z"
-}
-```
+Kalytn DID Documents do not include a `created` property as Kalytn DID can be automatically generated for each Kalytn address.
 
 ### Updated
 

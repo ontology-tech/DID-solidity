@@ -1,4 +1,4 @@
-# DID-Klaytn-solidity
+# DID-solidity
 
 ## Specification
 
@@ -25,6 +25,7 @@ We offer versions in two language:
 ### Ropsten
 
 EternalStorageProxy: 0x1c780D5419ee4A808a324AbE23300285D420cE2F
+
 DIDContract: 0xFDBfAF66cc8969e93E8eb157810bf7e552305d7F
 
 ## Gas Consumed

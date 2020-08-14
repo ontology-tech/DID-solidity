@@ -295,7 +295,6 @@ library StorageUtils {
         PublicKey[] authentication;
         string[] controller;
         Service[] service;
-        uint created;
         uint updated;
     }
 }
