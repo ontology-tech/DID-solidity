@@ -213,51 +213,51 @@ contract('DID', (accounts) => {
         assert.equal("AddService", addServTx1.logs[0].event);
         assert.equal(service1.serviceEndpoint, addServTx1.logs[0].args.serviceEndpoint);
     });
-    // it('test many pub key and auth key', async () => {
-    //     let instance = await EternalStorageProxy.deployed();
-    //     let didContract = await DIDContractV2.at(instance.address);
-    //     let allPubKey = await didContract.getAllPubKey(did);
-    //     let allAuthPubKey = await didContract.getAllAuthKey(did);
-    //     let pubKeyBeforeLen = allPubKey.length;
-    //     let authKeyBeforeLen = allAuthPubKey.length;
-    //     for (let i = 10; i < 30; i++) {
-    //         let pubKey = Buffer.from("133fe269d5587d68b344f0075039059f4fbb12a1667fd7968fe" +
-    //             "018a99de1fe358c70206f08caef079633c281cd10057ef837d07e777a8b7fc9e2e1359082b9" + i, "hex")
-    //         let tx = await didContract.addKey(did, pubKey, [did], emptySignerPubKey, {from: accounts[0]});
-    //         console.log("addKey gas:", tx.receipt.gasUsed);
-    //         tx = await didContract.setAuthKey(did, pubKey, emptySignerPubKey);
-    //         console.log("setAuthKey gas:", tx.receipt.gasUsed);
-    //         console.log("set key:", pubKey.toString('hex'));
-    //     }
-    //     // deactivate some auth key
-    //     let deactivatedAuth = [];
-    //     for (let i = 10; i < 30; i += Math.ceil(Math.random() * 3)) {
-    //         let pubKey = Buffer.from("133fe269d5587d68b344f0075039059f4fbb12a1667fd7968fe" +
-    //             "018a99de1fe358c70206f08caef079633c281cd10057ef837d07e777a8b7fc9e2e1359082b9" + i, "hex")
-    //         deactivatedAuth.push(pubKey);
-    //         let tx = await didContract.deactivateAuthKey(did, pubKey, emptySignerPubKey);
-    //         console.log("deactivateAuthKey gas:", tx.receipt.gasUsed);
-    //         console.log("deactivatedAuth:", pubKey.toString('hex'));
-    //     }
-    //     console.log("deactivate num:", deactivatedAuth.length);
-    //     // re-auth some auth key
-    //     for (let i = 0; i < deactivatedAuth.length / 2; i++) {
-    //         let pubKey = deactivatedAuth[i];
-    //         let tx = await didContract.setAuthKey(did, pubKey, emptySignerPubKey);
-    //         console.log("setAuthKey gas:", tx.receipt.gasUsed);
-    //         console.log("re-auth:", pubKey.toString('hex'));
-    //     }
-    //     allPubKey = await didContract.getAllPubKey(did);
-    //     allAuthPubKey = await didContract.getAllAuthKey(did);
-    //     let pubKeyAfterLen = allPubKey.length;
-    //     let authKeyAfterLen = allAuthPubKey.length;
-    //     assert.equal(20, pubKeyAfterLen - pubKeyBeforeLen);
-    //     // assert.equal(20, authKeyAfterLen - authKeyBeforeLen + deactivatedAuth.length / 2);
-    //     for (let i = 0; i < authKeyAfterLen - 1; i++) {
-    //         console.log(allAuthPubKey[i + 1].authIndex, ">", allAuthPubKey[i].authIndex);
-    //         // assert.ok(allAuthPubKey[i + 1].authIndex > allAuthPubKey[i].authIndex);
-    //     }
-    // });
+    it('test many pub key and auth key', async () => {
+        let instance = await EternalStorageProxy.deployed();
+        let didContract = await DIDContractV2.at(instance.address);
+        let allPubKey = await didContract.getAllPubKey(did);
+        let allAuthPubKey = await didContract.getAllAuthKey(did);
+        let pubKeyBeforeLen = allPubKey.length;
+        let authKeyBeforeLen = allAuthPubKey.length;
+        for (let i = 10; i < 30; i++) {
+            let pubKey = Buffer.from("133fe269d5587d68b344f0075039059f4fbb12a1667fd7968fe" +
+                "018a99de1fe358c70206f08caef079633c281cd10057ef837d07e777a8b7fc9e2e1359082b9" + i, "hex")
+            let tx = await didContract.addKey(did, pubKey, [did], emptySignerPubKey, {from: accounts[0]});
+            console.log("addKey gas:", tx.receipt.gasUsed);
+            tx = await didContract.setAuthKey(did, pubKey, emptySignerPubKey);
+            console.log("setAuthKey gas:", tx.receipt.gasUsed);
+            console.log("set key:", pubKey.toString('hex'));
+        }
+        // deactivate some auth key
+        let deactivatedAuth = [];
+        for (let i = 10; i < 30; i += Math.ceil(Math.random() * 3)) {
+            let pubKey = Buffer.from("133fe269d5587d68b344f0075039059f4fbb12a1667fd7968fe" +
+                "018a99de1fe358c70206f08caef079633c281cd10057ef837d07e777a8b7fc9e2e1359082b9" + i, "hex")
+            deactivatedAuth.push(pubKey);
+            let tx = await didContract.deactivateAuthKey(did, pubKey, emptySignerPubKey);
+            console.log("deactivateAuthKey gas:", tx.receipt.gasUsed);
+            console.log("deactivatedAuth:", pubKey.toString('hex'));
+        }
+        console.log("deactivate num:", deactivatedAuth.length);
+        // re-auth some auth key
+        for (let i = 0; i < deactivatedAuth.length / 2; i++) {
+            let pubKey = deactivatedAuth[i];
+            let tx = await didContract.setAuthKey(did, pubKey, emptySignerPubKey);
+            console.log("setAuthKey gas:", tx.receipt.gasUsed);
+            console.log("re-auth:", pubKey.toString('hex'));
+        }
+        allPubKey = await didContract.getAllPubKey(did);
+        allAuthPubKey = await didContract.getAllAuthKey(did);
+        let pubKeyAfterLen = allPubKey.length;
+        let authKeyAfterLen = allAuthPubKey.length;
+        assert.equal(20, pubKeyAfterLen - pubKeyBeforeLen);
+        // assert.equal(20, authKeyAfterLen - authKeyBeforeLen + deactivatedAuth.length / 2);
+        for (let i = 0; i < authKeyAfterLen - 1; i++) {
+            console.log(allAuthPubKey[i + 1].authIndex, ">", allAuthPubKey[i].authIndex);
+            // assert.ok(allAuthPubKey[i + 1].authIndex > allAuthPubKey[i].authIndex);
+        }
+    });
     it('test deactivate key', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContractV2.at(instance.address);
@@ -267,7 +267,6 @@ contract('DID', (accounts) => {
             if (pubKey.pubKeyData.length !== 130) {
                 continue;
             }
-            console.log("deactivateKey:", pubKey.pubKeyData);
             let tx = await didContract.deactivateKey(did, pubKey.pubKeyData, emptySignerPubKey, {from: accounts[0]});
             assert.equal(1, tx.logs.length);
             console.log("deactivateKey gas:", tx.receipt.gasUsed);

@@ -1,23 +1,5 @@
 # DID-Ethereum-solidity Interface Document
 
-### Register DID
-
-regIDWithPublicKey
-
-Param:
-
-Num | Name | Type   | Desc
-----|-----|------|-------
- 0  | did | string  | register did
- 1  | pubKey | bytes  | owner public key
-
-You need to use the account corresponding to `pubkey` to call this interface. After registration, the public key is
-bound to did and own Authentication permission.
-
-event:
-
-event Register(string indexed did);
-
 ### Deactivate DID
 
 deactivateID
@@ -27,6 +9,7 @@ Param:
 Num |  Name | Type   | Desc
 ----|-------|---|-------
  0  |  did | string  | DID
+ 1  |  signerPubKey | bytes  | signer public key
 
 event:
 

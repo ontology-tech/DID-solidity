@@ -25,8 +25,11 @@ contract('DID', (accounts) => {
         assert.equal("AddController", addControllerTx.logs[0].event);
         assert.equal(did, addControllerTx.logs[0].args.did.toLowerCase());
         assert.equal(controller, addControllerTx.logs[0].args.controller);
-        // controller add another auth key(accounts[3])
+        // controller add another auth key(public key of accounts[3])
         await didContract.addNewAuthKey(controller, controllerPubKey, [controller], emptySignerPubKey,
+            {from: accounts[1]});
+        // controller add another auth key(address of accounts[3])
+        await didContract.addNewAuthAddr(controller, accounts[3], [controller], emptySignerPubKey,
             {from: accounts[1]});
     });
 
@@ -78,8 +81,9 @@ contract('DID', (accounts) => {
     it('deactivate auth key by controller', async () => {
         let instance = await EternalStorageProxy.deployed();
         let didContract = await DIDContract.at(instance.address);
-        let tx = await didContract.deactivateAuthKeyByController(did, anotherKey, controller, controllerPubKey,
-            {from: accounts[3]});
+        // use address as verify parameter
+        let tx = await didContract.deactivateAuthKeyByController(did, anotherKey, controller,
+            new Buffer(accounts[3].slice(2), 'hex'), {from: accounts[3]});
         console.log("deactivateAuthKeyByController gas: ", tx.receipt.gasUsed);
         assert.equal(1, tx.logs.length);
         let evt = tx.logs[0];
