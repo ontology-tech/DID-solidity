@@ -1,8 +1,8 @@
-# DID-Ethereum-solidity
+# DID-Celo-solidity
 
 ## Specification
 
-[Spec](doc/en/DID-spec-ethereum.md)
+[Spec](doc/en/DID-spec-celo.md)
 
 ## Design and Interface Document
 
@@ -22,10 +22,10 @@ We offer versions in two language:
 
 ## Implementation
 
-### Ropsten
+### alfajores
 
-EternalStorageProxy: 0x9fF365Eb96B2E1E6F968947F56275D2bBe50F06e
-DIDContract: 0x55DE116e54220a243d2e77cEaC78B5F2B3F7f73c
+EternalStorageProxy: 0x0B468C280B95e28953Dec807E33C07C36aC86B0D
+DIDContract: 0x37D7bD94bDC0A579e0C92BF7525D4B31D883f96A
 
 ## Gas Consumed
 

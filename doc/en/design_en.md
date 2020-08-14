@@ -1,4 +1,4 @@
-# DID-Ethereum-solidity Design Document
+# DID-Celo-solidity Design Document
 
 ## DID Document
 

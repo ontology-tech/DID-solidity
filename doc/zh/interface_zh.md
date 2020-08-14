@@ -1,4 +1,4 @@
-# DID-Ethereum-solidity 接口文档
+# DID-Celo-solidity 接口文档
 
 ### 注销DID
 
@@ -526,12 +526,14 @@ getAllPubKey
 ```solidity
     struct PublicKey {
         string id; // public key id
-        string keyType; // public key type, in ethereum, the type is always EcdsaSecp256k1VerificationKey2019
+        string keyType; // public key type, in ethereum
         string[] controller; // did array, has some permission
-        bytes pubKey; // public key
+        bytes pubKeyData; // public key or address bytes
+        //        address ethAddr; // ethereum address, refer: https://www.w3.org/TR/did-spec-registries/#ethereumaddress
         bool deactivated; // is deactivated or not
         bool isPubKey; // existed in public key list or not
-        bool isAuth; // existed in authentication list or not
+        //        bool isAuth; // existed in authentication list or not
+        uint authIndex; // index at authentication list, 0 means no auth
     }
 ```
 
