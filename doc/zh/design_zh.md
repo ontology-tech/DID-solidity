@@ -1,4 +1,4 @@
-# DID-Ethereum-solidity 设计文档
+# DID-Klaytn-solidity 设计文档
 
 ## 当前DID的document结构
 

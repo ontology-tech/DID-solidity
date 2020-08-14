@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity 0.5.6;
 
 import './UpgradeabilityProxy.sol';
 import './UpgradeabilityOwnerStorage.sol';
@@ -45,7 +45,7 @@ contract OwnedUpgradeabilityProxy is UpgradeabilityOwnerStorage, UpgradeabilityP
      */
     function transferProxyOwnership(address newOwner) public onlyProxyOwner {
         require(newOwner != address(0));
-        ProxyOwnershipTransferred(proxyOwner(), newOwner);
+        emit ProxyOwnershipTransferred(proxyOwner(), newOwner);
         setUpgradeabilityOwner(newOwner);
     }
 
@@ -68,7 +68,7 @@ contract OwnedUpgradeabilityProxy is UpgradeabilityOwnerStorage, UpgradeabilityP
      */
     function upgradeToAndCall(string memory version, address implementation, bytes memory data) payable public onlyProxyOwner {
         upgradeTo(version, implementation);
-        (bool success,) = address(this).call{value : msg.value}(data);
+        (bool success,) = address(this).call.value(msg.value)(data);
         require(success);
     }
 }

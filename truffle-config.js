@@ -18,7 +18,7 @@
  *
  */
 
-const HDWalletProvider = require('@truffle/hdwallet-provider');
+const HDWalletProvider = require('truffle-hdwallet-provider-klaytn');
 
 const fs = require('fs');
 const mnemonic = fs.readFileSync(".secret").toString().trim();
@@ -60,11 +60,11 @@ module.exports = {
         // Useful for deploying to a public network.
         // NB: It's important to wrap the provider as a function.
 
-        ropsten: {
-            provider: function () {
-                return new HDWalletProvider(mnemonic, "")
-            },
-            network_id: 3,       // Any network (default: none)
+        baobab: {
+            provider: () => new HDWalletProvider(mnemonic, "https://api.baobab.klaytn.net:8651"),
+            network_id: '1001', //Klaytn baobab testnet's network id
+            gas: '8500000',
+            gasPrice: null
         },
 
         // Useful for private networks
@@ -83,7 +83,7 @@ module.exports = {
     // Configure your compilers
     compilers: {
         solc: {
-            version: "0.6.11",    // Fetch exact version from solc-bin (default: truffle's version)
+            version: "0.5.6",    // Fetch exact version from solc-bin (default: truffle's version)
             // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
             settings: {          // See the solidity docs for advice about optimization and evmVersion
                 optimizer: {

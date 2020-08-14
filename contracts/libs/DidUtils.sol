@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity 0.5.6;
 pragma experimental ABIEncoderV2;
 
 import "./BytesUtils.sol";
 
 library DidUtils {
 
-    // example: did:etho:5Ee76017be7F983a520a778B413758A9DB49cBe9
+    // example: did:klay:5Ee76017be7F983a520a778B413758A9DB49cBe9
     /**
    * @dev verify did format
    * @param did did
@@ -16,7 +16,7 @@ library DidUtils {
         if (didData.length != 49) {
             return false;
         }
-        bytes memory prefix = bytes("did:etho:");
+        bytes memory prefix = bytes("did:klay:");
         if (!BytesUtils.equal(BytesUtils.slice(didData, 0, prefix.length), prefix)) {
             return false;
         }

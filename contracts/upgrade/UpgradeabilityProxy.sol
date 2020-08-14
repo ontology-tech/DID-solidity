@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity 0.5.6;
 
 import './Proxy.sol';
 import './UpgradeabilityStorage.sol';
@@ -20,7 +20,7 @@ contract UpgradeabilityProxy is Proxy, UpgradeabilityStorage {
     * @dev Tells the address of the current implementation
     * @return address of the current implementation
     */
-    function implementation() override(Proxy, UpgradeabilityStorage) public view returns (address) {
+    function implementation() public view returns (address) {
         return _implementation;
     }
 

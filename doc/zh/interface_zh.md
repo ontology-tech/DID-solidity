@@ -1,4 +1,4 @@
-# DID-Ethereum-solidity 接口文档
+# DID-Klaytn-solidity 接口文档
 
 ### 注销DID
 

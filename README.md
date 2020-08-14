@@ -1,8 +1,8 @@
-# DID-Ethereum-solidity
+# DID-Klaytn-solidity
 
 ## Specification
 
-[Spec](doc/en/DID-spec-ethereum.md)
+[Spec](doc/en/DID-spec-klaytn.md)
 
 ## Design and Interface Document
 
@@ -24,8 +24,8 @@ We offer versions in two language:
 
 ### Ropsten
 
-EternalStorageProxy: 0x9fF365Eb96B2E1E6F968947F56275D2bBe50F06e
-DIDContract: 0x55DE116e54220a243d2e77cEaC78B5F2B3F7f73c
+EternalStorageProxy: 0x1c780D5419ee4A808a324AbE23300285D420cE2F
+DIDContract: 0xFDBfAF66cc8969e93E8eb157810bf7e552305d7F
 
 ## Gas Consumed
 

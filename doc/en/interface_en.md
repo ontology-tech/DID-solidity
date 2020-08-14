@@ -1,4 +1,4 @@
-# DID-Ethereum-solidity Interface Document
+# DID-Klaytn-solidity Interface Document
 
 ### Deactivate DID
 

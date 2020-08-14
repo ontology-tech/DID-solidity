@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
-pragma solidity ^0.6.0;
+pragma solidity 0.5.6;
 
 library BytesUtils {
 
@@ -328,7 +328,7 @@ library BytesUtils {
         for (uint i = 0; i < bStr.length; i++) {
             // Uppercase character...
             uint8 c = uint8(bStr[i]);
-            if ((c >= 65) && ( c <= 90)) {
+            if ((c >= 65) && (c <= 90)) {
                 // So we add 32 to make it lowercase
                 bLower[i] = bytes1(c + 32);
             } else {
