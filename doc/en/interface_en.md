@@ -496,7 +496,6 @@ return: DID Document。
         PublicKey[] authentication;
         string[] controller;
         Service[] service;
-        uint created;
         uint updated;
     }
 ```
@@ -583,18 +582,6 @@ return: []Service
         string serviceEndpoint;
     }
 ```
-
-#### Query Created Time
-
-getCreatedTime
-
-Param:
-
-Num | Name | Type   | Desc
-----|-----|----|-------
-0  | did | string | 
-
-return: uint
 
 #### Query Updated Time
 

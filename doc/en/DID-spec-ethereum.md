@@ -33,7 +33,7 @@ did:etho:f269E60fF7280e3E11b7EEd7B76b5C005105D121
 
 ## ETHO DID Registration and Deactivation
 
-ETHO DID **MUST** be registered on the Ethereum blockchain to be activated, and the same ETHO DID **MUST NOT** be registered more than once.
+ETHO DID can be automatically generated without registration for each Ethereum address.
 
 When a ETHO DID is deactivated, all the related data including public keys, controllers, and other properties will be deleted and only a record of the ETHO DID identifier will remain on the Ethereum blockchain.
 
@@ -53,7 +53,6 @@ Below is the basic structure of the ETHO DID Document:
   "authentication": [...],
   "controller": [...],
   "service": [...],
-  "created": "...",
   "updated": "..."
 }
 ```
@@ -200,17 +199,7 @@ Below is a specific example:
 
 ### Created
 
-ETHO DID Documents **SHOULD** include a `created` property to specify the time of creation.
-
-This part is derived directly from [W3C DIDs specification](https://www.w3.org/TR/did-core/#created).
-
-Below is a specific example:
-
-```json
-{
-  "created": "2018-06-30T12:00:00Z"
-}
-```
+ETHO DID Documents do not include a `created` property as ETHO DID can be automatically generated for each Ethereum address.
 
 ### Updated
 

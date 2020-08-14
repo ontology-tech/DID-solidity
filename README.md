@@ -1,4 +1,4 @@
-# DID-Ethereum-solidity
+# DID-solidity
 
 ## Specification
 
@@ -25,6 +25,7 @@ We offer versions in two language:
 ### Ropsten
 
 EternalStorageProxy: 0x9fF365Eb96B2E1E6F968947F56275D2bBe50F06e
+
 DIDContract: 0x55DE116e54220a243d2e77cEaC78B5F2B3F7f73c
 
 ## Gas Consumed
