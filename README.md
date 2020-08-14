@@ -60,6 +60,4 @@ DIDContract: 0x55DE116e54220a243d2e77cEaC78B5F2B3F7f73c
 
 ## TODO
 
-1. update design and interface document;
-2. add commend to some function;
-3. add more unit test;
+1. add more unit test;
