@@ -25,6 +25,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev deactivate did, delete all document data of this did, but record did has been registered,
    *    it means this did cannot been registered in the future
    * @param did did
+   * @param singer tx signer, could be public key or address
    */
     function deactivateID(string memory did, bytes memory singer)
     override public {
@@ -50,6 +51,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param did did
    * @param newPubKey new public key
    * @param controller controller of newPubKey, they are some did
+   * @param singer tx signer, could be public key or address
    */
     function addKey(string memory did, bytes memory newPubKey, string[] memory controller,
         bytes memory singer)
@@ -64,6 +66,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
     * @param did did
     * @param addr new address
     * @param controller controller of newPubKey, they are some did
+   * @param singer tx signer, could be public key or address
     */
     function addAddr(string memory did, address addr, string[] memory controller, bytes memory singer)
     override public {
@@ -77,6 +80,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param did did
    * @param pubKey the new public key
    * @param controller controller of newPubKey, they are some did
+   * @param singer tx signer, could be public key or address
    */
     function addNewAuthKey(string memory did, bytes memory pubKey, string[] memory controller,
         bytes memory singer)
@@ -92,6 +96,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param did did
    * @param addr the new address
    * @param controller controller of newPubKey, they are some did
+   * @param singer tx signer, could be public key or address
    */
     function addNewAuthAddr(string memory did, address addr, string[] memory controller,
         bytes memory singer)
@@ -107,6 +112,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param pubKey the new public key
    * @param controller controller of newPubKey, they are some did
    * @param controllerSigner tx signer should be one of did controller
+   * @param singer tx signer, could be public key or address
    */
     function addNewAuthKeyByController(string memory did, bytes memory pubKey, string[] memory controller,
         string memory controllerSigner, bytes memory singer)
@@ -123,6 +129,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param addr the new address
    * @param controller controller of newPubKey, they are some did
    * @param controllerSigner tx signer should be one of did controller
+   * @param singer tx signer, could be public key or address
    */
     function addNewAuthAddrByController(string memory did, address addr, string[] memory controller,
         string memory controllerSigner, bytes memory singer)
@@ -150,6 +157,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev add one key existed in publicKey list to authentication list
    * @param did did
    * @param pubKey public key
+   * @param singer tx signer, could be public key or address
    */
     function setAuthKey(string memory did, bytes memory pubKey, bytes memory singer)
     override public {
@@ -162,6 +170,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev add one address existed in publicKey list to authentication list
    * @param did did
    * @param addr address
+   * @param singer tx signer, could be public key or address
    */
     function setAuthAddr(string memory did, address addr, bytes memory singer)
     override public {
@@ -175,6 +184,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param did did
    * @param pubKey public key
    * @param controller one of did controller
+   * @param singer tx signer, could be public key or address
    */
     function setAuthKeyByController(string memory did, bytes memory pubKey, string memory controller,
         bytes memory singer)
@@ -189,6 +199,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param did did
    * @param addr address
    * @param controller one of did controller
+   * @param singer tx signer, could be public key or address
    */
     function setAuthAddrByController(string memory did, address addr, string memory controller,
         bytes memory singer)
@@ -215,6 +226,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev deactivate one key that existed in public key list
    * @param did did
    * @param pubKey public key
+   * @param singer tx signer, could be public key or address
    */
     function deactivateKey(string memory did, bytes memory pubKey, bytes memory singer)
     override public {
@@ -227,6 +239,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev deactivate one addr that existed in public key list
    * @param did did
    * @param addr address
+   * @param singer tx signer, could be public key or address
    */
     function deactivateAddr(string memory did, address addr, bytes memory singer)
     override public {
@@ -246,6 +259,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev remove one key from authentication list
    * @param did did
    * @param pubKey public key
+   * @param singer tx signer, could be public key or address
    */
     function deactivateAuthKey(string memory did, bytes memory pubKey, bytes memory singer)
     override public {
@@ -258,6 +272,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev remove one address from authentication list
    * @param did did
    * @param addr address
+   * @param singer tx signer, could be public key or address
    */
     function deactivateAuthAddr(string memory did, address addr, bytes memory singer)
     override public {
@@ -271,6 +286,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param did did
    * @param pubKey public key
    * @param controller one of did controller
+   * @param singer tx signer, could be public key or address
    */
     function deactivateAuthKeyByController(string memory did, bytes memory pubKey, string memory controller,
         bytes memory singer)
@@ -285,6 +301,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param did did
    * @param addr address
    * @param controller one of did controller
+   * @param singer tx signer, could be public key or address
    */
     function deactivateAuthAddrByController(string memory did, address addr, string memory controller,
         bytes memory singer)
@@ -298,6 +315,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev remove public key from authentication list
    * @param did did
    * @param pubKey public key
+   * @param singer tx signer, could be public key or address
    */
     function deAuthPubKey(string memory did, bytes memory pubKey, address addr) internal {
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
@@ -318,6 +336,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev add context to did document
    * @param did did
    * @param contexts contexts
+   * @param singer tx signer, could be public key or address
    */
     function addContext(string memory did, string[] memory contexts, bytes memory singer)
     override public {
@@ -338,6 +357,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev remove context from did document
    * @param did did
    * @param contexts contexts
+   * @param singer tx signer, could be public key or address
    */
     function removeContext(string memory did, string[] memory contexts, bytes memory singer)
     override public {
@@ -358,6 +378,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev add one controller to did controller list
    * @param did did
    * @param controller one of did controller
+   * @param singer tx signer, could be public key or address
    */
     function addController(string memory did, string memory controller, bytes memory singer)
     override public {
@@ -374,6 +395,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev remove controller from controller list
    * @param did did
    * @param controller one of did controller
+   * @param singer tx signer, could be public key or address
    */
     function removeController(string memory did, string memory controller, bytes memory singer)
     override public {
@@ -392,6 +414,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param serviceId service id
    * @param serviceType service type
    * @param serviceEndpoint service endpoint
+   * @param singer tx signer, could be public key or address
    */
     function addService(string memory did, string memory serviceId, string memory serviceType,
         string memory serviceEndpoint, bytes memory singer)
@@ -413,6 +436,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @param serviceId service id
    * @param serviceType service type
    * @param serviceEndpoint service endpoint
+   * @param singer tx signer, could be public key or address
    */
     function updateService(string memory did, string memory serviceId, string memory serviceType,
         string memory serviceEndpoint, bytes memory singer)
@@ -432,6 +456,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev remove service
    * @param did did
    * @param serviceId service id
+   * @param singer tx signer, could be public key or address
    */
     function removeService(string memory did, string memory serviceId, bytes memory singer)
     override public {
@@ -444,10 +469,6 @@ contract DIDContractV2 is MixinDidStorage, IDid {
         emit RemoveService(did, serviceId);
     }
 
-    /**
-   * @dev record did updated time
-   * @param did did
-   */
     function updateTime(string memory did) internal {
         string memory updateTimeKey = KeyUtils.genUpdateTimeKey(did);
         bytes32 key = KeyUtils.genUpdateTimeSecondKey();
@@ -488,6 +509,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
     /**
    * @dev verify tx has signed by did
    * @param did did
+   * @param singer tx signer, could be public key or address
    */
     function verifySignature(string memory did, bytes memory singer)
     public view returns (bool)
@@ -512,20 +534,20 @@ contract DIDContractV2 is MixinDidStorage, IDid {
         if (singer.length == 0) {
             return (didAddr == msg.sender || didAddr == tx.origin, did);
         } else {
-            address addr;
+            address signer;
             bytes32 pubKeyListSecondKey;
             if (singer.length == 20) {
-                addr = BytesUtils.bytesToAddress(singer);
-                pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(encodePubKeyAndAddr(new bytes(0), addr));
+                signer = BytesUtils.bytesToAddress(singer);
+                pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(encodePubKeyAndAddr(new bytes(0), signer));
             } else {
-                addr = DidUtils.pubKeyToAddr(singer);
+                signer = DidUtils.pubKeyToAddr(singer);
                 pubKeyListSecondKey = KeyUtils.genPubKeyListSecondKey(encodePubKeyAndAddr(singer, address(0)));
             }
-            if (addr != msg.sender && addr != tx.origin) {
+            if (signer != msg.sender && signer != tx.origin) {
                 return (false, did);
             }
             // self sign
-            if (addr == didAddr) {
+            if (signer == didAddr) {
                 return (true, did);
             }
             string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
@@ -545,6 +567,7 @@ contract DIDContractV2 is MixinDidStorage, IDid {
    * @dev verify tx has signed by did controller
    * @param did did
    * @param controller one of did controller
+   * @param singer tx signer, could be public key or address
    */
     function verifyController(string memory did, string memory controller, bytes memory singer)
     public view returns (bool){
