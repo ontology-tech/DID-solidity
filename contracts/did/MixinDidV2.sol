@@ -311,12 +311,6 @@ contract DIDContractV2 is MixinDidStorage, IDid {
         emit DeactivateAuthAddr(did, addr);
     }
 
-    /**
-   * @dev remove public key from authentication list
-   * @param did did
-   * @param pubKey public key
-   * @param singer tx signer, could be public key or address
-   */
     function deAuthPubKey(string memory did, bytes memory pubKey, address addr) internal {
         string memory pubKeyListKey = KeyUtils.genPubKeyListKey(did);
         StorageUtils.deAuthPubKey(data[pubKeyListKey], encodePubKeyAndAddr(pubKey, addr));
