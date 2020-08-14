@@ -1,4 +1,4 @@
-# DID-Ethereum-solidity Design Document
+# DID-Binance-solidity Design Document
 
 ## DID Document
 

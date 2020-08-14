@@ -1,8 +1,8 @@
-# DID-Ethereum-solidity
+# DID-Binance-solidity
 
 ## Specification
 
-[Spec](doc/en/DID-spec-ethereum.md)
+[Spec](doc/en/DID-spec-binance.md)
 
 ## Design and Interface Document
 
@@ -24,8 +24,8 @@ We offer versions in two language:
 
 ### Ropsten
 
-EternalStorageProxy: 0x9fF365Eb96B2E1E6F968947F56275D2bBe50F06e
-DIDContract: 0x55DE116e54220a243d2e77cEaC78B5F2B3F7f73c
+EternalStorageProxy: 0x55DE116e54220a243d2e77cEaC78B5F2B3F7f73c
+DIDContract: 0x19a007AD975dfe97278A082Bcec7694E0FDe45A7
 
 ## Gas Consumed
 
