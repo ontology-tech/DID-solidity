@@ -33,7 +33,7 @@ did:bnb:f269E60fF7280e3E11b7EEd7B76b5C005105D121
 
 ## Binance DID Registration and Deactivation
 
-Binance DID **MUST** be registered on the Binance blockchain to be activated, and the same Binance DID **MUST NOT** be registered more than once.
+Binance DID can be automatically generated without registration for each Binance address.
 
 When a Binance DID is deactivated, all the related data including public keys, controllers, and other properties will be deleted and only a record of the Binance DID identifier will remain on the Binance blockchain.
 
@@ -53,7 +53,6 @@ Below is the basic structure of the Binance DID Document:
   "authentication": [...],
   "controller": [...],
   "service": [...],
-  "created": "...",
   "updated": "..."
 }
 ```
@@ -200,17 +199,7 @@ Below is a specific example:
 
 ### Created
 
-Binance DID Documents **SHOULD** include a `created` property to specify the time of creation.
-
-This part is derived directly from [W3C DIDs specification](https://www.w3.org/TR/did-core/#created).
-
-Below is a specific example:
-
-```json
-{
-  "created": "2018-06-30T12:00:00Z"
-}
-```
+Binance DID Documents do not include a `created` property as Binance DID can be automatically generated for each Binance address.
 
 ### Updated
 

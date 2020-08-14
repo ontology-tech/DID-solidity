@@ -676,6 +676,6 @@ contract DIDContractV2 is MixinDidStorage, IDid {
         StorageUtils.Service[] memory service = getAllService(did);
         uint updated = getUpdatedTime(did);
         // always set created time as 0
-        return StorageUtils.DIDDocument(context, did, publicKey, authentication, controller, service, 0, updated);
+        return StorageUtils.DIDDocument(context, did, publicKey, authentication, controller, service, updated);
     }
 }
