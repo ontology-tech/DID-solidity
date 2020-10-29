@@ -66,6 +66,13 @@ module.exports = {
             },
             network_id: 3,       // Any network (default: none)
         },
+        ethereum: {
+            provider: function () {
+                return new HDWalletProvider(mnemonic, "",)
+            },
+            network_id: 1,       // Any network (default: none)
+            gasPrice: 80000000000,  // 20 gwei (in wei) (default: 100 gwei)
+        },
 
         // Useful for private networks
         // private: {
